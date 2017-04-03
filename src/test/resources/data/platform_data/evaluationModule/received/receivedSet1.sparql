@@ -1,0 +1,44 @@
+{
+  "head": {
+    "vars": [ "x0" , "x1" , "x2" , "x3" , "x4" ]
+  } ,
+  "results": {
+    "bindings": [
+      {
+        "x0": { "type": "uri" , "value": "http://www.myOntology.com#a" } ,
+        "x1": { "type": "uri" , "value": "http://www.myOntology.com#b" } ,
+        "x2": { "type": "uri" , "value": "http://www.myOntology.com#c" } ,
+        "x3": { "type": "uri" , "value": "http://www.myOntology.com#d" } ,
+	"x4": { "type": "uri" , "value": "http://www.myOntology.com#e" } 
+      } ,
+      {
+        "x0": { "type": "uri" , "value": "http://www.myOntology.com#a" } ,
+        "x1": { "type": "uri" , "value": "http://www.myOntology.com#b" } ,
+        "x2": { "type": "uri" , "value": "http://www.myOntology.com#c" } ,
+        "x3": { "type": "uri" , "value": "http://www.myOntology.com#d" } ,
+	"x4": { "type": "uri" , "value": "http://www.myOntology.com#t" } 
+      } ,
+      {
+        "x0": { "type": "uri" , "value": "http://www.myOntology.com#f" } ,
+        "x1": { "type": "uri" , "value": "http://www.myOntology.com#b" } ,
+        "x2": { "type": "uri" , "value": "http://www.myOntology.com#c" } ,
+        "x3": { "type": "uri" , "value": "http://www.myOntology.com#r" } ,
+	"x4": { "type": "uri" , "value": "http://www.myOntology.com#e" } 
+      } ,
+      {
+        "x0": { "type": "uri" , "value": "http://www.myOntology.com#a" } ,
+        "x1": { "type": "uri" , "value": "http://www.myOntology.com#g" } ,
+        "x2": { "type": "uri" , "value": "http://www.myOntology.com#g" } ,
+        "x3": { "type": "uri" , "value": "http://www.myOntology.com#d" } ,
+	"x4": { "type": "uri" , "value": "http://www.myOntology.com#e" } 
+      } ,
+      {
+        "x0": { "type": "uri" , "value": "http://www.myOntology.com#b" } ,
+        "x1": { "type": "uri" , "value": "http://www.myOntology.com#b" } ,
+        "x2": { "type": "uri" , "value": "http://www.myOntology.com#r" } ,
+        "x3": { "type": "uri" , "value": "http://www.myOntology.com#d" } ,
+	"x4": { "type": "uri" , "value": "http://www.myOntology.com#m" } 
+      } 
+    ]
+  }
+}

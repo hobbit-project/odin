@@ -1,0 +1,9 @@
+FROM java
+
+ADD target/odin-0.0.1-SNAPSHOT.jar /odin/odin.jar
+
+WORKDIR /odin
+
+CMD java -cp odin.jar org.hobbit.core.run.ComponentStarter org.hobbit.odin.odintaskgenerator.OdinTaskGenerator
+
+

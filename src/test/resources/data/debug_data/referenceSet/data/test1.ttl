@@ -1,0 +1,6 @@
+<http://www.myOntology.com#a> <http://www.myOntology.com#hasTimePoint> <http://www.myOntology.com#Object124> .
+<http://www.myOntology.com#a> <http://www.myOntology.com#Property24> <http://www.myOntology.com#Subject84> .
+<http://www.myOntology.com#a> <http://www.myOntology.com#Property24> <http://www.myOntology.com#Subject82> .
+<http://www.myOntology.com#a> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.myOntology.com#isEvent> .
+<http://www.myOntology.com#b> <http://www.myOntology.com#Property24> <http://www.myOntology.com#Subject856> .
+<http://www.myOntology.com#b> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.myOntology.com#isEvent> .

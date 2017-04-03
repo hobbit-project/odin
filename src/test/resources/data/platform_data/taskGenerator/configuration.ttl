@@ -1,0 +1,50 @@
+
+@prefix : <http://limes.sf.net/ontology/> .
+@prefix myOntology: <http://www.myOntology.com#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xml: <http://www.w3.org/XML/1998/namespace> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+:test	a			:LimesSpecs ;
+			:hasSource		:test ;
+			:hasTarget		:test2 ;
+			:hasMetric		:metric ;
+			:hasReview		:review ;
+			:hasAcceptance :acceptance .
+		
+:test	        a			:SourceDataset ;
+			rdfs:label		"test";
+			:endPoint		"/home/kleanthi/Documents/GitHub/HOBBIT/workpackage3/T3.1/src/test/resources/data/platform_data/taskGenerator/dereferenced_data.ttl";
+			:type			"ttl";
+			:variable		"?x" ;
+			:pageSize		"-1";
+			:restriction 		"?x a myOntology:isEvent" ;
+			:property 		"myOntology:hasTimePoint/myOntology:beginTime RENAME beginDate" .
+			
+
+:test2	        a			:TargetDataset ;
+			rdfs:label		"test";
+			:endPoint		"/home/kleanthi/Documents/GitHub/HOBBIT/workpackage3/T3.1/src/test/resources/data/platform_data/taskGenerator/dereferenced_data.ttl";
+			:type			"ttl";
+			:variable		"?x" ;
+			:pageSize		"-1";
+			:restriction 		"?x a myOntology:isEvent" ;
+			:property 		"myOntology:hasTimePoint/myOntology:beginTime RENAME beginDate" .
+ 					
+
+:metric		a				:Metric ;
+			:expression		"tmp_equal(x.beginDate,y.beginDate)" .
+
+:review		a				:Review ;
+			:threshold 		"0" ;
+			:file 			"resources/equalEventsReview.ttl";
+			:relation 		"" .
+
+:acceptance	a			:Acceptance ;
+			:threshold 		"1" ;
+			:file 			"resources/equalEvents.ttl";
+			:relation 		"myOntology:tmp_equal".
+
+

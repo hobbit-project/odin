@@ -1,0 +1,19 @@
+{
+  "head": {
+    "vars": [ "x1" , "x2" , "x3" ]
+  } ,
+  "results": {
+    "bindings": [
+      {
+        "x1": { "type": "uri" , "value": "http://www.myOntology.com#a" } ,
+        "x2": { "type": "uri" , "value": "http://www.myOntology.com#Property24" } ,
+        "x3": { "type": "uri" , "value": "http://www.myOntology.com#b" }
+      } ,
+      {
+        "x1": { "type": "uri" , "value": "http://www.myOntology.com#a" } ,
+        "x2": { "type": "uri" , "value": "http://www.myOntology.com#Property24" } ,
+        "x3": { "type": "uri" , "value": "http://www.myOntology.com#a" }
+      }
+    ]
+  }
+}

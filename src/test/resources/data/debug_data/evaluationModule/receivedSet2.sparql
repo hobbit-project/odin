@@ -1,0 +1,44 @@
+{
+  "head": {
+    "vars": [ "x0" , "x1" , "x2" ]
+  } ,
+  "results": {
+    "bindings": [
+      {
+        "x0": { "type": "uri" , "value": "http://www.myOntology.com#a" } ,
+        "x1": { "type": "uri" , "value": "http://www.myOntology.com#b" } ,
+        "x2": { "type": "uri" , "value": "http://www.myOntology.com#c" } 
+      } ,
+      {
+        "x0": { "type": "uri" , "value": "http://www.myOntology.com#a" } ,
+        "x1": { "type": "uri" , "value": "http://www.myOntology.com#b" } ,
+        "x2": { "type": "uri" , "value": "http://www.myOntology.com#n" } 
+      } ,
+      {
+        "x0": { "type": "uri" , "value": "http://www.myOntology.com#f" } ,
+        "x1": { "type": "uri" , "value": "http://www.myOntology.com#b" } ,
+        "x2": { "type": "uri" , "value": "http://www.myOntology.com#y" } 
+      } ,
+      {
+        "x0": { "type": "uri" , "value": "http://www.myOntology.com#a" } ,
+        "x1": { "type": "uri" , "value": "http://www.myOntology.com#g" } ,
+        "x2": { "type": "uri" , "value": "http://www.myOntology.com#n" } 
+      } ,
+      {
+        "x0": { "type": "uri" , "value": "http://www.myOntology.com#b" } ,
+        "x1": { "type": "uri" , "value": "http://www.myOntology.com#b" } ,
+        "x2": { "type": "uri" , "value": "http://www.myOntology.com#t" } 
+      } ,
+      {
+        "x0": { "type": "uri" , "value": "http://www.myOntology.com#b" } ,
+        "x1": { "type": "uri" , "value": "http://www.myOntology.com#e" } ,
+        "x2": { "type": "uri" , "value": "http://www.myOntology.com#n" } 
+      }  ,
+      {
+        "x0": { "type": "uri" , "value": "http://www.myOntology.com#b" } ,
+        "x1": { "type": "uri" , "value": "http://www.myOntology.com#b" } ,
+        "x2": { "type": "uri" , "value": "http://www.myOntology.com#e" } 
+      } 
+    ]
+  }
+}
