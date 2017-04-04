@@ -675,16 +675,23 @@ public class OdinDataGenerator extends AbstractDataGenerator {
                     dataRow = TSVFile.readLine();
                 } catch (IOException | ParseException e) {
                     e.printStackTrace();
+                    LOGGER.error("IOException or ParseException");
+                    TSVFile.close();
+                    throw new RuntimeException();
                 }
             }
         } catch (IOException e) {
             e.printStackTrace();
+            LOGGER.error("IOException");
+            throw new RuntimeException();
         }
 
         try {
             TSVFile.close();
         } catch (IOException e) {
             e.printStackTrace();
+            LOGGER.error("Can't close file " + getDATA_GENERATOR_OUTPUT_DATASET() + "timeStamps.tsv");
+            throw new RuntimeException();
 
         }
         return files;

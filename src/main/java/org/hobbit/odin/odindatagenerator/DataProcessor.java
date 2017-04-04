@@ -189,6 +189,10 @@ public class DataProcessor {
         Statement timeStampStatement = model
                 .listStatements(subject, ResourceFactory.createProperty(timeProperties[0]), (RDFNode) null).next();
 
+        if (timeStampStatement == null) {
+            logger.error("Time Stamp Statement has no object.");
+            throw new RuntimeException();
+        }
         for (int i = 1; i < timeProperties.length; i++) {
             RDFNode object = timeStampStatement.getObject();
             if (!object.isResource()) {
@@ -198,6 +202,7 @@ public class DataProcessor {
             timeStampStatement = model.listStatements(object.asResource(),
                     ResourceFactory.createProperty(timeProperties[i]), (RDFNode) null).next();
         }
+
         return timeStampStatement;
     }
 
@@ -236,27 +241,26 @@ public class DataProcessor {
         if (!newFolder.exists())
             newFolder.mkdir();
 
-        FileWriter writer = null;
         String fileName = folder + "clean/" + timeStamp + ".ttl";
+        Model existingModel = ModelFactory.createDefaultModel();
+        Model newModel = ModelFactory.createDefaultModel();
+        if ((new File(fileName).exists())) {
+            existingModel.read(fileName);
+            newModel.add(existingModel);
+        }
+        newModel.add(outlinks);
+        newModel.add(inlinks);
+        FileOutputStream writer = null;
         try {
 
-            writer = new FileWriter(fileName, true);
+            writer = new FileOutputStream(fileName, false);
+            newModel.write(writer, "ttl");
         } catch (IOException e) {
             e.printStackTrace();
         }
-        /////////////////////////////////////////////////////////////////////
-        Model existingModel = ModelFactory.createDefaultModel();
-        if ((new File(fileName).exists()))
-            existingModel.read(fileName);
-        else
-            timeStamps.put(timeStamp, fileName);
 
-        Model newModel = ModelFactory.createDefaultModel();
-        newModel.add(outlinks);
-        newModel.add(inlinks);
+        timeStamps.put(timeStamp, fileName);
 
-        newModel.remove(existingModel);
-        newModel.write(writer, "TTL");
 
     }
 
@@ -269,27 +273,43 @@ public class DataProcessor {
      */
     public void writeTimeStamps(String output) {
 
+        if (timeStamps.isEmpty()) {
+            logger.error("TimeStamps are empty.");
+            throw new RuntimeException();
+        }
+
         String logFile = output + "timeStamps.tsv";
+        logger.info("Writing timestamps into file: " + logFile);
+        BufferedWriter writer = null;
+
+        try {
+            writer = new BufferedWriter(new FileWriter(logFile, true));
+        } catch (IOException e1) {
+            e1.printStackTrace();
+            logger.error("Problem with writing in " + logFile);
+            throw new RuntimeException();
+        }
+
         for (Entry<String, String> entry : timeStamps.entrySet()) {
             String date = entry.getKey();
             String file = entry.getValue();
-            BufferedWriter writer = null;
             try {
-                writer = new BufferedWriter(new FileWriter(logFile, true));
-                writer.write(date);
-                writer.write("\t");
-                writer.write(file);
-                writer.write("\n");
+                writer.write(date + "\t" + file + "\n");
             } catch (Exception e) {
                 e.printStackTrace();
-            } finally {
-                try {
-                    writer.close();
-                } catch (Exception e) {
-                }
             }
         }
-
+        try {
+            writer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+            logger.error("Couldn't close file " + logFile);
+            throw new RuntimeException();
+        }
+        if (!(new File(logFile)).exists()) {
+            logger.error("File " + logFile + " doesn't exist.");
+            throw new RuntimeException();
+        }
     }
 
     /**
@@ -308,6 +328,10 @@ public class DataProcessor {
         else if (this.classProperty.equals(MainClassProperty.TWIG_MAINCLASS.mainClassProperty()))
             statements = model.listStatements(null, typeProperty, ResourceFactory.createResource(classProperty));
 
+        if (statements == null) {
+            logger.error("Model includes no subjects of type " + classProperty);
+            throw new RuntimeException();
+        }
         return statements;
     }
 
@@ -325,6 +349,10 @@ public class DataProcessor {
         } else if (this.classProperty.equals(MainClassProperty.TWIG_MAINCLASS.mainClassProperty())) {
             mainResource = statement.getSubject();
         }
+        if (mainResource == null) {
+            logger.error("A statement includes no subjects of type " + classProperty);
+            throw new RuntimeException();
+        }
         return mainResource;
     }
 
@@ -337,6 +365,9 @@ public class DataProcessor {
         // output directory of all mimicking files
         String fullNameDirectory = outputDirectory;
         File[] listOfFiles = (new File(fullNameDirectory)).listFiles();
+        for (File f : listOfFiles) {
+            logger.info(f.getAbsolutePath());
+        }
         if (listOfFiles.length == 0) {
             logger.error("Mimicking algorithm did not return any data files.");
             throw new RuntimeException();

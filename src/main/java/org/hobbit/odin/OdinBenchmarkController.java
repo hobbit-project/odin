@@ -6,6 +6,8 @@ import org.hobbit.odin.util.OdinConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.concurrent.Semaphore;
 
@@ -144,8 +146,20 @@ public class OdinBenchmarkController extends AbstractBenchmarkController {
                 mimickingOutput = iterator.next().asLiteral().getString();
                 if (!mimickingOutput.endsWith("/"))
                     mimickingOutput = mimickingOutput + "/";
-                mimickingOutput = mimickingOutput + this.numberOfDataGenerators + "_" + this.numberOfTaskGenerators
-                        + "/";
+                mimickingOutput = System.getProperty("user.dir") + "/" + mimickingOutput + this.numberOfDataGenerators
+                        + "_" + this.numberOfTaskGenerators + "/";
+                boolean success = false;
+                File directory = new File(mimickingOutput);
+                if (!directory.exists()) {
+                    success = directory.mkdirs();
+                    if (!success) {
+                        try {
+                            throw new IOException("Failed to create new directory: " + mimickingOutput);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
             } catch (Exception e) {
                 LOGGER.error("Exception while parsing parameter.", e);
             }
