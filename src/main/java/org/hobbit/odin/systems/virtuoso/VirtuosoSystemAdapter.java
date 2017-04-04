@@ -101,16 +101,18 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
              */
             QueryExecutionFactoryHttp foo = qef.unwrap(QueryExecutionFactoryHttp.class);
             // Add pagination
-            LOGGER.info("QueryExecutionFactoryPaginated");
             qef = new QueryExecutionFactoryPaginated(qef, 100);
             // Create a QueryExecution object from a query string ...
-            LOGGER.info("createQueryExecution");
             QueryExecution qe = qef.createQueryExecution(test);
             // and run it.
-            LOGGER.info("execSelect");
-            testResults = qe.execSelect();
+            try {
+                testResults = qe.execSelect();
+            } catch (Exception e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
         }
-
+        
     }
 
     @Override
@@ -164,13 +166,10 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
          */
         QueryExecutionFactoryHttp foo = qef.unwrap(QueryExecutionFactoryHttp.class);
         // Add pagination
-        LOGGER.info("QueryExecutionFactoryPaginated");
         qef = new QueryExecutionFactoryPaginated(qef, 100);
         // Create a QueryExecution object from a query string ...
-        LOGGER.info("createQueryExecution");
         QueryExecution qe = qef.createQueryExecution(selectQuery);
         // and run it.
-        LOGGER.info("execSelect");
         results = qe.execSelect();
         // serialize results
 
@@ -191,8 +190,8 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
 
     @Override
     public void close() throws IOException {
-        super.close();
         this.stopContainer(containerName);
+        super.close();
         LOGGER.info("Virtuoso has stopped.");
     }
 

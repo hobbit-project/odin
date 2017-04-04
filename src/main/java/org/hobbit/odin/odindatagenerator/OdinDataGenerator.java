@@ -65,6 +65,8 @@ public class OdinDataGenerator extends AbstractDataGenerator {
 
     private Semaphore minMaxTimestampMutex = new Semaphore(0);
 
+    private int insertCounter = 0;
+    private int selectCounter = 0;
     /* Byte array for the Task Generator */
     private byte[] task;
 
@@ -173,7 +175,8 @@ public class OdinDataGenerator extends AbstractDataGenerator {
 
         @Override
         public void run() {
-            LOGGER.info("Sending INSERT SPARQL query..");
+            insertCounter++;
+            LOGGER.info("Sending INSERT SPARQL query No."+insertCounter);
             // retrieve insert query
             String insert = this.insertQuery.getUpdateRequestAsString();
             // serialize insert query into a byte array and send it to the
@@ -231,7 +234,8 @@ public class OdinDataGenerator extends AbstractDataGenerator {
 
         @Override
         public void run() {
-            LOGGER.info("Sending SELECT SPARQL query..");
+            selectCounter++;
+            LOGGER.info("Sending SELECT SPARQL query No."+selectCounter);
 
             String select = this.selectQuery.getSelectQueryAsString();
 
@@ -707,7 +711,7 @@ public class OdinDataGenerator extends AbstractDataGenerator {
         for (Entry<Integer, Stream> entry : streams.entrySet()) {
             // get the the stream
             Stream stream = entry.getValue();
-
+            LOGGER.info("Dealing with stream No."+stream.getID());
             ArrayList<InsertQueryInfo> insertQueries = stream.getInsertQueries();
 
             long firstStreamInsertTS = stream.getBeginPoint();
