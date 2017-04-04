@@ -82,7 +82,7 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
     public void internalInit() {
         String[] envVariablesVirtuoso = new String[] { "SPARQL_UPDATE=true",
                 "DEFAULT_GRAPH=http://www.virtuoso-graph.com/" };
-        containerName = this.createContainer("tenforce/virtuoso:1.1.1-virtuoso7.2.2", envVariablesVirtuoso);
+        containerName = this.createContainer("tenforce/virtuoso:latest", envVariablesVirtuoso);
 
         String test = "select ?x ?p ?o \n" + "where { \n" + "?x ?p ?o \n" + "}";
 
