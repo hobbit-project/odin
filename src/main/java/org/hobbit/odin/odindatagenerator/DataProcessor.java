@@ -10,6 +10,8 @@ import org.hobbit.odin.util.MainClassProperty;
 import org.hobbit.odin.util.TimeStampProperty;
 
 import java.io.*;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 
 /**
  * Responsible for the pre-processing of the input data. Divides mimicking
@@ -34,11 +36,14 @@ public class DataProcessor {
     String classProperty = null;
     /* rdf:type property */
     Property typeProperty = RDF.type;
+    HashMap<String, Long> filesCounter = new HashMap<String, Long>();
 
     /* Constructor */
     public DataProcessor(String outputDirectory, String mimickingDataset) {
         this.outputDirectory = outputDirectory;
         this.getProperties(mimickingDataset);
+        filesCounter = new HashMap<String, Long>();
+        timeStamps = new TreeMap<String, String>();
     }
 
     /* Getters */
@@ -237,11 +242,28 @@ public class DataProcessor {
         }
 
         String timeStamp = timeStampStatement.getObject().asLiteral().getLexicalForm();
+        if (!filesCounter.containsKey(timeStamp)) {
+            SimpleDateFormat df = null;
+            Date date = null;
+            try {
+                if (this.classProperty.equals(MainClassProperty.TWIG_MAINCLASS.mainClassProperty()))
+                    df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+                else
+                    df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS");
+                date = df.parse(timeStamp);
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+            filesCounter.put(timeStamp, date.getTime());
+        }
+        long c = filesCounter.get(timeStamp);
+
         File newFolder = new File(folder + "clean/");
         if (!newFolder.exists())
             newFolder.mkdir();
 
-        String fileName = folder + "clean/" + timeStamp + ".ttl";
+        String fileName = folder + "clean/" + c + ".ttl";
+
         Model existingModel = ModelFactory.createDefaultModel();
         Model newModel = ModelFactory.createDefaultModel();
         if ((new File(fileName).exists())) {
@@ -252,7 +274,6 @@ public class DataProcessor {
         newModel.add(inlinks);
         FileOutputStream writer = null;
         try {
-
             writer = new FileOutputStream(fileName, false);
             newModel.write(writer, "ttl");
         } catch (IOException e) {
@@ -260,7 +281,6 @@ public class DataProcessor {
         }
 
         timeStamps.put(timeStamp, fileName);
-
 
     }
 
