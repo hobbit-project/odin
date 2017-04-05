@@ -176,8 +176,6 @@ public class OdinDataGenerator extends AbstractDataGenerator {
 
         @Override
         public void run() {
-            insertCounter++;
-            LOGGER.info("Sending INSERT SPARQL query No."+insertCounter);
             // retrieve insert query
             String insert = this.insertQuery.getUpdateRequestAsString();
             // serialize insert query into a byte array and send it to the
@@ -235,9 +233,7 @@ public class OdinDataGenerator extends AbstractDataGenerator {
 
         @Override
         public void run() {
-            selectCounter++;
-            LOGGER.info("Sending SELECT SPARQL query No."+selectCounter);
-
+            
             String select = this.selectQuery.getSelectQueryAsString();
 
             byte[] expectedAnswers = this.selectQuery.getExpectedAnswers();
@@ -719,12 +715,16 @@ public class OdinDataGenerator extends AbstractDataGenerator {
             long lastStreamInsertTS = stream.getEndPoint();
 
             for (int i = 0; i < insertQueries.size(); i++) {
+                insertCounter++;
+                LOGGER.info("Sending INSERT SPARQL query No."+insertCounter);
                 InsertQueryInfo currentInsertQuery = insertQueries.get(i);
                 InsertThread insertThread = new InsertThread(currentInsertQuery);
                 Thread.sleep(currentInsertQuery.getDelay());
                 executor.execute(insertThread);
 
             }
+            selectCounter++;
+            LOGGER.info("Sending SELECT SPARQL query No."+selectCounter);
             SelectQueryInfo selectQuery = stream.getSelectQuery();
             long modelSize = stream.getStreamModelSize();
             SelectThread selectThread = new SelectThread(selectQuery, firstStreamInsertTS, lastStreamInsertTS,

@@ -22,6 +22,7 @@ import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.update.UpdateRequest;
+import org.hobbit.core.Commands;
 import org.hobbit.core.components.*;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.slf4j.Logger;

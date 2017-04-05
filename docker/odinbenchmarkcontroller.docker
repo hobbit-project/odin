@@ -1,7 +1,7 @@
 
 FROM java
 
-ADD target/odin-0.0.1-SNAPSHOT.jar /odin/odin.jar
+ADD target/odin-1.0.0-SNAPSHOT.jar /odin/odin.jar
 
 WORKDIR /odin
 
