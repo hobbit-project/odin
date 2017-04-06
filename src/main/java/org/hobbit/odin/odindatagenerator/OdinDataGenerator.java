@@ -282,6 +282,8 @@ public class OdinDataGenerator extends AbstractDataGenerator {
 
         LOGGER.info("Assigning set of triples to time stamps.");
         TreeMap<Long, String> files = assignFilesToTimeStamps();
+        LOGGER.info(this.getGeneratorId()+" begin point "+files.firstKey());
+        LOGGER.info(this.getGeneratorId()+" end point "+files.lastKey());
 
         // get overall min and max time stamps
         ByteBuffer data = ByteBuffer.allocate(16);
@@ -488,12 +490,12 @@ public class OdinDataGenerator extends AbstractDataGenerator {
      */
     public Map<Long, ArrayList<String>> convertTimeStampsToNewInterval(TreeMap<Long, String> files) {
 
-        LOGGER.info("Data Set Begin Point: "+this.datasetBeginPoint);
-        LOGGER.info("Data Set End Point: "+this.datasetEndPoint);
+        LOGGER.info(this.getGeneratorId()+" Data Set Begin Point: "+this.datasetBeginPoint);
+        LOGGER.info(this.getGeneratorId()+" Data Set End Point: "+this.datasetEndPoint);
         
-        LOGGER.info("Benchmark Begin Point: "+this.benchmarkBeginPoint);
-        LOGGER.info("Benchmark End Point: "+this.benchmarkEndPoint);
-
+        LOGGER.info(this.getGeneratorId()+" Benchmark Begin Point: "+this.benchmarkBeginPoint);
+        LOGGER.info(this.getGeneratorId()+" Benchmark End Point: "+this.benchmarkEndPoint);
+ 
         
         Map<Long, ArrayList<String>> insertList = new TreeMap<Long, ArrayList<String>>();
         for (Map.Entry<Long, String> entry : files.entrySet()) {
@@ -666,6 +668,7 @@ public class OdinDataGenerator extends AbstractDataGenerator {
         try {
             TSVFile = new BufferedReader(new FileReader(getDATA_GENERATOR_OUTPUT_DATASET() + "timeStamps.tsv"));
             String dataRow = TSVFile.readLine();
+            LOGGER.info(this.getGeneratorId()+" begin point "+dataRow.split("\t")[0]);
             while (dataRow != null) {
                 try {
                     String timeStamp = dataRow.split("\t")[0];
