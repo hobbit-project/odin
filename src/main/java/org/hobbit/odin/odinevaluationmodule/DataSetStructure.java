@@ -1,6 +1,6 @@
 package org.hobbit.odin.odinevaluationmodule;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 import org.apache.jena.rdf.model.Model;
@@ -29,7 +29,8 @@ public enum DataSetStructure {
 
     public static final String subject = "http://purl.org/linked-data/sdmx/2009/subject#2.9";
     public static final String publisher = "Kleanthi Georgala for HOBBIT";
-    public static final String date = DateTimeFormatter.ofPattern("yyyy/MM/dd").format(LocalDate.now());
+    public static final String date = LocalDateTime.now()
+            .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
     public static final String datasetStrucute = "http://purl.org/linked-data/cube#DataStructureDefinition";
     public static final String dimension = "http://w3id.org/hobbit/experiments#taskID";
     public static final String unitMeasureObject = "http://purl.org/linked-data/sdmx/2009/attribute#unitMeasure";

@@ -2,6 +2,8 @@ package org.hobbit.odin.systems.virtuoso;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
+import java.util.List;
 
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactoryHttp;
 import org.aksw.jena_sparql_api.core.utils.UpdateRequestUtils;
@@ -13,6 +15,7 @@ import org.apache.jena.atlas.web.auth.SimpleAuthenticator;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.ResultSetFormatter;
+import org.apache.jena.sparql.core.DatasetDescription;
 import org.apache.jena.update.UpdateRequest;
 import org.hobbit.core.components.AbstractSystemAdapter;
 import org.hobbit.core.rabbit.RabbitMQUtils;
@@ -49,16 +52,6 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
 
     public void setFlag(boolean flag) {
         this.flag = flag;
-    }
-
-    private ResultSet results;
-
-    public ResultSet getResults() {
-        return results;
-    }
-
-    public void setResults(ResultSet results) {
-        this.results = results;
     }
 
     @Override
@@ -104,7 +97,6 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
             try {
                 testResults = qe.execSelect();
             } catch (Exception e) {
-                e.printStackTrace();
             } finally {
                 qe.close();
             }
@@ -122,7 +114,9 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
         // }
         // });
         HttpAuthenticator auth = new SimpleAuthenticator("dba", "dba".toCharArray());
-        updateExecFactory = new UpdateExecutionFactoryHttp("http://" + virtuosoContName + ":8890/sparql", auth);
+        List<String> graphUris = Arrays.asList("http://www.virtuoso-graph.com/");
+        updateExecFactory = new UpdateExecutionFactoryHttp("http://" + virtuosoContName + ":8890/sparql",
+                DatasetDescription.create(graphUris, graphUris), auth);
     }
 
     @Override
@@ -132,11 +126,15 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
         ByteBuffer buffer = ByteBuffer.wrap(arg0);
         // read the insert query
         String insertQuery = RabbitMQUtils.readString(buffer);
-
         // insert query
         UpdateRequest updateRequest = UpdateRequestUtils.parse(insertQuery);
 
-        updateExecFactory.createUpdateProcessor(updateRequest).execute();
+        try {
+            updateExecFactory.createUpdateProcessor(updateRequest).execute();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
         LOGGER.info("INSERT SPARQL query has been processed.");
     }
 
@@ -152,18 +150,25 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
         // Create a QueryExecution object from a query string ...
         QueryExecution qe = queryExecFactory.createQueryExecution(selectQuery);
         // and run it.
-        results = qe.execSelect();
-        // serialize results
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        ResultSetFormatter.outputAsJSON(outputStream, results);
+        try {
+            ResultSet results = qe.execSelect();
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            ResultSetFormatter.outputAsJSON(outputStream, results);
 
-        if (flag == true) {
-            try {
-                this.sendResultToEvalStorage(taskId, outputStream.toByteArray());
-            } catch (IOException e) {
-                LOGGER.error("Got an exception while sending results.", e);
+            if (flag == true) {
+                try {
+                    this.sendResultToEvalStorage(taskId, outputStream.toByteArray());
+                } catch (IOException e) {
+                    LOGGER.error("Got an exception while sending results.", e);
+                }
             }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            qe.close();
         }
+        // serialize results
+
         LOGGER.info("SELECT SPARQL query has been processed.");
 
     }

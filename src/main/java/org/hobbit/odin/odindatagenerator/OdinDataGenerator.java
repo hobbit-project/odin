@@ -490,12 +490,6 @@ public class OdinDataGenerator extends AbstractDataGenerator {
      */
     public Map<Long, ArrayList<String>> convertTimeStampsToNewInterval(TreeMap<Long, String> files) {
 
-        LOGGER.info(this.getGeneratorId()+" Data Set Begin Point: "+this.datasetBeginPoint);
-        LOGGER.info(this.getGeneratorId()+" Data Set End Point: "+this.datasetEndPoint);
-        
-        LOGGER.info(this.getGeneratorId()+" Benchmark Begin Point: "+this.benchmarkBeginPoint);
-        LOGGER.info(this.getGeneratorId()+" Benchmark End Point: "+this.benchmarkEndPoint);
- 
         
         Map<Long, ArrayList<String>> insertList = new TreeMap<Long, ArrayList<String>>();
         for (Map.Entry<Long, String> entry : files.entrySet()) {
@@ -668,7 +662,6 @@ public class OdinDataGenerator extends AbstractDataGenerator {
         try {
             TSVFile = new BufferedReader(new FileReader(getDATA_GENERATOR_OUTPUT_DATASET() + "timeStamps.tsv"));
             String dataRow = TSVFile.readLine();
-            LOGGER.info(this.getGeneratorId()+" begin point "+dataRow.split("\t")[0]);
             while (dataRow != null) {
                 try {
                     String timeStamp = dataRow.split("\t")[0];

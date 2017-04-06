@@ -228,6 +228,8 @@ public class OdinBenchmarkController extends AbstractBenchmarkController {
                 OdinConstants.EVALUATION_MACRO_AVERAGE_RECALL + "=" + "http://w3id.org/bench#macroAverageRecall",
                 OdinConstants.EVALUATION_MACRO_AVERAGE_PRECISION + "=" + "http://w3id.org/bench#macroAveragePrecision",
                 OdinConstants.EVALUATION_MACRO_AVERAGE_FMEASURE + "=" + "http://w3id.org/bench#macroAverageFmeasure",
+                OdinConstants.EVALUATION_MAX_TPS + "=" + "http://w3id.org/bench#maxTPS",
+                OdinConstants.EVALUATION_AVERAGE_TPS + "=" + "http://w3id.org/bench#averageTPS",
                 OdinConstants.EVALUATION_TASKS_EVALUATION_RECALL + "=" + "http://w3id.org/bench#tasksRecall",
                 OdinConstants.EVALUATION_TASKS_EVALUATION_PRECISION + "=" + "http://w3id.org/bench#tasksPrecision",
                 OdinConstants.EVALUATION_TASKS_EVALUATION_FMEASURE + "=" + "http://w3id.org/bench#tasksFmeasure",

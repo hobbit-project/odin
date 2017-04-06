@@ -23,6 +23,7 @@ import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
+import org.apache.jena.vocabulary.XSD;
 import org.hobbit.core.Constants;
 import org.hobbit.core.components.AbstractEvaluationModule;
 import org.hobbit.core.rabbit.RabbitMQUtils;
@@ -578,32 +579,42 @@ public class OdinEvaluationModule extends AbstractEvaluationModule {
         Resource experiment = this.finalModel.createResource(experimentUri);
         this.finalModel.add(experiment, RDF.type, HOBBIT.Experiment);
 
-        Literal averageTaskDelayLiteral = this.finalModel.createTypedLiteral(new Double(averageTaskDelay));
+        // Literal maxTPSLiteral =
+        // this.finalModel.createTypedLiteral(this.maxTPS,
+        // XSDDatatype.XSDdouble);
+
+        Literal averageTaskDelayLiteral = this.finalModel.createTypedLiteral(averageTaskDelay, XSDDatatype.XSDdouble);
         this.finalModel.add(experiment, this.EVALUATION_AVERAGE_TASK_DELAY, averageTaskDelayLiteral);
 
-        Literal microAverageRecallLiteral = this.finalModel.createTypedLiteral(new Double(microAverageRecall));
+        Literal microAverageRecallLiteral = this.finalModel.createTypedLiteral(microAverageRecall,
+                XSDDatatype.XSDdouble);
         this.finalModel.add(experiment, this.EVALUATION_MICRO_AVERAGE_RECALL, microAverageRecallLiteral);
 
-        Literal microAveragePrecisionLiteral = this.finalModel.createTypedLiteral(new Double(microAveragePrecision));
+        Literal microAveragePrecisionLiteral = this.finalModel.createTypedLiteral(microAveragePrecision,
+                XSDDatatype.XSDdouble);
         this.finalModel.add(experiment, this.EVALUATION_MICRO_AVERAGE_PRECISION, microAveragePrecisionLiteral);
 
-        Literal microAverageFmeasureLiteral = this.finalModel.createTypedLiteral(new Double(microAverageFmeasure));
+        Literal microAverageFmeasureLiteral = this.finalModel.createTypedLiteral(microAverageFmeasure,
+                XSDDatatype.XSDdouble);
         this.finalModel.add(experiment, this.EVALUATION_MICRO_AVERAGE_FMEASURE, microAverageFmeasureLiteral);
 
-        Literal macroAverageRecallLiteral = this.finalModel.createTypedLiteral(new Double(macroAverageRecall));
+        Literal macroAverageRecallLiteral = this.finalModel.createTypedLiteral(macroAverageRecall,
+                XSDDatatype.XSDdouble);
         this.finalModel.add(experiment, this.EVALUATION_MACRO_AVERAGE_RECALL, macroAverageRecallLiteral);
 
-        Literal macroAveragePrecisionLiteral = this.finalModel.createTypedLiteral(new Double(macroAveragePrecision));
+        Literal macroAveragePrecisionLiteral = this.finalModel.createTypedLiteral(macroAveragePrecision,
+                XSDDatatype.XSDdouble);
         this.finalModel.add(experiment, this.EVALUATION_MACRO_AVERAGE_PRECISION, macroAveragePrecisionLiteral);
 
-        Literal macroAverageFmeasureLiteral = this.finalModel.createTypedLiteral(new Double(macroAverageFmeasure));
+        Literal macroAverageFmeasureLiteral = this.finalModel.createTypedLiteral(macroAverageFmeasure,
+                XSDDatatype.XSDdouble);
         this.finalModel.add(experiment, this.EVALUATION_MACRO_AVERAGE_FMEASURE, macroAverageFmeasureLiteral);
 
-        Literal averageTPSLiteral = this.finalModel.createTypedLiteral(new Double(averageTPS));
+        Literal averageTPSLiteral = this.finalModel.createTypedLiteral(averageTPS, XSDDatatype.XSDdouble);
         this.finalModel.add(experiment, this.EVALUATION_AVERAGE_TPS, averageTPSLiteral);
 
-        HashMap<String, Resource> evalResources = this.createCubeDatasets(experiment);
-        this.addObservations(evalResources, experiment);
+        //HashMap<String, Resource> evalResources = this.createCubeDatasets(experiment);
+        //this.addObservations(evalResources, experiment);
 
         LOGGER.info("Summary of Evaluation is over.");
 
@@ -651,10 +662,9 @@ public class OdinEvaluationModule extends AbstractEvaluationModule {
                     this.finalModel.createLiteral(DataSetStructure.publisher, "en"));
 
             // "2010-08-11"^^xsd:date;
-
             taskEvaluationResource.addProperty(
                     this.finalModel.createProperty(CubeDatasetProperties.DATE.getPropertyURI()),
-                    this.finalModel.createTypedLiteral(DataSetStructure.date, XSDDatatype.XSDdate));
+                    this.finalModel.createTypedLiteral(DataSetStructure.date, XSDDatatype.XSDdateTime));
 
             // dct:subject sdmx-subject:2.9 ;
             taskEvaluationResource.addProperty(
@@ -754,29 +764,29 @@ public class OdinEvaluationModule extends AbstractEvaluationModule {
                             + "_Observation" + counter + "_for_" + experimentUri.split("#")[1]);
                     // exp:recall1 a qb:Observation;
                     obs.addProperty(RDF.type, this.finalModel.createResource(DataSetStructure.observation));
+
                     // qb:dataSet exp:overallEvaluation1Recall ;
                     obs.addProperty(this.finalModel.createProperty(DataSetStructure.dataset), eval);
+
                     // exp:taskID
                     // "1"^^http://www.w3.org/2001/XMLSchema#unsignedInt ;
-                    obs.addProperty(dimension, this.finalModel.createTypedLiteral(new Integer(counter)));
+                    obs.addProperty(dimension, String.valueOf(counter), XSDDatatype.XSDinteger);
 
                     // bench:recall
                     // "0.88"^^http://www.w3.org/2001/XMLSchema#double .
-                    obs.addProperty(measure,
-                            this.finalModel.createTypedLiteral(new Double(task.getKPIs().get(kpiLabel))));
+                    obs.addProperty(measure, String.valueOf(task.getKPIs().get(kpiLabel)), XSDDatatype.XSDdouble);
+
                     if (kpiLabel.equalsIgnoreCase("recall")) {
                         double recall = task.getKPIs().get(kpiLabel);
                         if (recall == 1.0d) {
                             this.maxTPS = task.getKPIs().get("TPS");
                         }
                     }
-
                 }
-
                 counter++;
             }
         }
-        Literal maxTPSLiteral = this.finalModel.createTypedLiteral(new Double(this.maxTPS));
+        Literal maxTPSLiteral = this.finalModel.createTypedLiteral(this.maxTPS, XSDDatatype.XSDdouble);
         this.finalModel.add(experiment, this.EVALUATION_MAX_TPS, maxTPSLiteral);
 
     }
