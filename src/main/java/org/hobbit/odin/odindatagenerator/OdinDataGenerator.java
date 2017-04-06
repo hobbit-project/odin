@@ -488,6 +488,13 @@ public class OdinDataGenerator extends AbstractDataGenerator {
      */
     public Map<Long, ArrayList<String>> convertTimeStampsToNewInterval(TreeMap<Long, String> files) {
 
+        LOGGER.info("Data Set Begin Point: "+this.datasetBeginPoint);
+        LOGGER.info("Data Set End Point: "+this.datasetEndPoint);
+        
+        LOGGER.info("Benchmark Begin Point: "+this.benchmarkBeginPoint);
+        LOGGER.info("Benchmark End Point: "+this.benchmarkEndPoint);
+
+        
         Map<Long, ArrayList<String>> insertList = new TreeMap<Long, ArrayList<String>>();
         for (Map.Entry<Long, String> entry : files.entrySet()) {
             Long oldTimeStamp = entry.getKey();
