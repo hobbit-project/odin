@@ -32,8 +32,6 @@ import org.slf4j.LoggerFactory;
 public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
     private static final Logger LOGGER = LoggerFactory.getLogger(VirtuosoSystemAdapter.class);
     public String virtuosoContName = null;
-    /* for debugging purposes */
-    private boolean flag = true;
 
     private org.aksw.jena_sparql_api.core.QueryExecutionFactory queryExecFactory;
     private org.aksw.jena_sparql_api.core.UpdateExecutionFactory updateExecFactory;
@@ -45,21 +43,13 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
         super(numberOfMessagesInParallel);
     }
 
-    /* Getters and Setters */
-    public boolean isFlag() {
-        return flag;
-    }
-
-    public void setFlag(boolean flag) {
-        this.flag = flag;
-    }
-
     @Override
     public void init() throws Exception {
         LOGGER.info("Initialization begins.");
         super.init();
         internalInit();
         LOGGER.info("Initialization is over.");
+
     }
 
     /**
@@ -75,14 +65,6 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
         // Create query execution factory
         queryExecFactory = new QueryExecutionFactoryHttp("http://" + virtuosoContName + ":8890/sparql",
                 "http://www.virtuoso-graph.com/");
-        /*
-         * LOGGER.info("QueryExecutionFactoryRetry"); qef = new
-         * QueryExecutionFactoryRetry(qef, 5, 1000);
-         * LOGGER.info("QueryExecutionFactoryDelay"); // Add delay in order to
-         * be nice to the remote server (delay in // milli seconds) qef = new
-         * QueryExecutionFactoryDelay(qef, 5000);
-         */
-        // Add pagination
         queryExecFactory = new QueryExecutionFactoryPaginated(queryExecFactory, 100);
 
         String test = "select ?x ?p ?o \n" + "where { \n" + "?x ?p ?o \n" + "}";
@@ -102,17 +84,6 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
             }
         }
 
-        // Create SPARQL service for sending insert statements
-
-        // List<DatasetListener> listeners = Collections.<DatasetListener>
-        // singletonList(new DatasetListener() {
-        // @Override
-        // public void onPreModify(Diff<Set<Quad>> diff, UpdateContext
-        // updateContext) {
-        // // Print out any changes to the console
-        // System.out.println(diff);
-        // }
-        // });
         HttpAuthenticator auth = new SimpleAuthenticator("dba", "dba".toCharArray());
         List<String> graphUris = Arrays.asList("http://www.virtuoso-graph.com/");
         updateExecFactory = new UpdateExecutionFactoryHttp("http://" + virtuosoContName + ":8890/sparql",
@@ -155,20 +126,17 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             ResultSetFormatter.outputAsJSON(outputStream, results);
 
-            if (flag == true) {
-                try {
-                    this.sendResultToEvalStorage(taskId, outputStream.toByteArray());
-                } catch (IOException e) {
-                    LOGGER.error("Got an exception while sending results.", e);
-                }
+            try {
+                this.sendResultToEvalStorage(taskId, outputStream.toByteArray());
+            } catch (IOException e) {
+                LOGGER.error("Got an exception while sending results.", e);
             }
+
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
             qe.close();
         }
-        // serialize results
-
         LOGGER.info("SELECT SPARQL query has been processed.");
 
     }

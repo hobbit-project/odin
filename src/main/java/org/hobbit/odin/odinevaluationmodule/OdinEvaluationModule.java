@@ -23,7 +23,6 @@ import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
-import org.apache.jena.vocabulary.XSD;
 import org.hobbit.core.Constants;
 import org.hobbit.core.components.AbstractEvaluationModule;
 import org.hobbit.core.rabbit.RabbitMQUtils;
@@ -108,6 +107,7 @@ public class OdinEvaluationModule extends AbstractEvaluationModule {
     private Property EVALUATION_AVERAGE_TASK_DELAY = null;
     /* Property for task triples-per-seconds Cube Dataset */
     private Property EVALUATION_TASKS_EVALUATION_TPS = null;
+
 
     /* Setters and Getters */
     public TreeMap<Long, ArrayList<TaskEvaluation>> getTasks() {
@@ -554,6 +554,7 @@ public class OdinEvaluationModule extends AbstractEvaluationModule {
     @Override
     public Model summarizeEvaluation() throws Exception {
         LOGGER.info("Summary of Evaluation begins.");
+        LOGGER.info("Odin Evaluation Module has evaluated " + this.taskCounter + " tasks");
 
         if (this.experimentUri == null) {
             Map<String, String> env = System.getenv();
@@ -613,8 +614,8 @@ public class OdinEvaluationModule extends AbstractEvaluationModule {
         Literal averageTPSLiteral = this.finalModel.createTypedLiteral(averageTPS, XSDDatatype.XSDdouble);
         this.finalModel.add(experiment, this.EVALUATION_AVERAGE_TPS, averageTPSLiteral);
 
-        //HashMap<String, Resource> evalResources = this.createCubeDatasets(experiment);
-        //this.addObservations(evalResources, experiment);
+        HashMap<String, Resource> evalResources = createCubeDatasets(experiment);
+        //addObservations(evalResources, experiment);
 
         LOGGER.info("Summary of Evaluation is over.");
 
@@ -639,8 +640,12 @@ public class OdinEvaluationModule extends AbstractEvaluationModule {
         DataSetStructure[] KPIs = DataSetStructure.class.getEnumConstants();
         for (DataSetStructure kpi : KPIs) {
 
+            // e.g.
+            // http://w3id.org/hobbit/experiments#Delay_Dataset_for_1231433223
+            String l = kpi.getDatasetResource(experimentUri);
+
             // overallEvaluation1Recall
-            Resource taskEvaluationResource = this.finalModel.createResource(kpi.getDatasetResource(experimentUri));
+            Resource taskEvaluationResource = this.finalModel.createResource(l);
 
             experiment.addProperty(this.finalModel.createProperty(kpi.getKpiProperty()), taskEvaluationResource);
 
@@ -690,14 +695,18 @@ public class OdinEvaluationModule extends AbstractEvaluationModule {
 
             // qb:component [ qb:dimension exp:taskID];
             Resource taskID = this.finalModel.createResource(DataSetStructure.dimension);
-            Resource taskIDAnon = this.finalModel.createResource();
+            // e.g.
+            // http://w3id.org/hobbit/experiments#Delay_Dataset_for_1231433223_taskIDComponent
+            Resource taskIDAnon = this.finalModel.createResource(l + "_taskIDComponent");
             taskIDAnon.addProperty(this.finalModel.createProperty(CubeDatasetProperties.DIMENSION.getPropertyURI()),
                     taskID);
             kpiStructure.addProperty(componentProperty, taskIDAnon);
 
             // qb:component [ qb:measure bench:recall];
             Resource measure = this.finalModel.createResource(kpi.getMeasure());
-            Resource measureAnon = this.finalModel.createResource();
+            // e.g.
+            // http://w3id.org/hobbit/experiments#Delay_Dataset_for_1231433223_MeasureComponent
+            Resource measureAnon = this.finalModel.createResource(l + "MeasureComponent");
             measureAnon.addProperty(this.finalModel.createProperty(CubeDatasetProperties.MEASURE.getPropertyURI()),
                     measure);
             kpiStructure.addProperty(componentProperty, measureAnon);
@@ -708,14 +717,13 @@ public class OdinEvaluationModule extends AbstractEvaluationModule {
              * qb:DataSet ] .
              * 
              */
-            Resource attributeAnon = this.finalModel.createResource();
-
+            // e.g.
+            // http://w3id.org/hobbit/experiments#Delay_Dataset_for_1231433223_AttributeComponent
+            Resource attributeAnon = this.finalModel.createResource(l + "AttributeComponent");
             attributeAnon.addProperty(this.finalModel.createProperty(CubeDatasetProperties.ATTRIBUTE.getPropertyURI()),
                     this.finalModel.createProperty(DataSetStructure.unitMeasureObject));
-
             attributeAnon.addProperty(this.finalModel.createProperty(CubeDatasetProperties.REQUIRED.getPropertyURI()),
                     this.finalModel.createTypedLiteral(new Boolean(true)));
-
             attributeAnon.addProperty(this.finalModel.createProperty(CubeDatasetProperties.ATTACHMENT.getPropertyURI()),
                     this.finalModel.createResource(DataSetStructure.dataset));
 
