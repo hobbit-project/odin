@@ -532,8 +532,8 @@ public class OdinEvaluationModule extends AbstractEvaluationModule {
         double precision = (double) truePositives / (double) (truePositives + falsePositives);
         double tps = (double) modelSize / (double) (streamEndPoint - streamBeginPoint);
         // double rec, double pr, double tps, long bP, long eP
-        TaskEvaluation newEvaluation = new TaskEvaluation(recall, precision, tps, delay);
-
+        TaskEvaluation newEvaluation = new TaskEvaluation(recall, precision, tps, delay, receivedAnswers.size(), expectedAnswers.size());
+        
         if (!getTasks().containsKey(taskSentTimestamp)) {
             getTasks().put(taskSentTimestamp, new ArrayList<TaskEvaluation>());
         }
@@ -615,7 +615,7 @@ public class OdinEvaluationModule extends AbstractEvaluationModule {
         this.finalModel.add(experiment, this.EVALUATION_AVERAGE_TPS, averageTPSLiteral);
 
         HashMap<String, Resource> evalResources = createCubeDatasets(experiment);
-        //addObservations(evalResources, experiment);
+        addObservations(evalResources, experiment);
 
         LOGGER.info("Summary of Evaluation is over.");
 
@@ -697,7 +697,7 @@ public class OdinEvaluationModule extends AbstractEvaluationModule {
             Resource taskID = this.finalModel.createResource(DataSetStructure.dimension);
             // e.g.
             // http://w3id.org/hobbit/experiments#Delay_Dataset_for_1231433223_taskIDComponent
-            Resource taskIDAnon = this.finalModel.createResource(l + "_taskIDComponent");
+            Resource taskIDAnon = this.finalModel.createResource(l + "DimensionComponent");
             taskIDAnon.addProperty(this.finalModel.createProperty(CubeDatasetProperties.DIMENSION.getPropertyURI()),
                     taskID);
             kpiStructure.addProperty(componentProperty, taskIDAnon);
@@ -753,7 +753,7 @@ public class OdinEvaluationModule extends AbstractEvaluationModule {
         int counter = 1;
 
         for (Entry<Long, ArrayList<TaskEvaluation>> cell : getTasks().entrySet()) {
-            System.out.println(cell.getKey());
+           
             for (TaskEvaluation task : cell.getValue()) {
                 // for each task, get all kpis
                 DataSetStructure[] KPIs = DataSetStructure.class.getEnumConstants();
@@ -784,6 +784,13 @@ public class OdinEvaluationModule extends AbstractEvaluationModule {
                     // "0.88"^^http://www.w3.org/2001/XMLSchema#double .
                     obs.addProperty(measure, String.valueOf(task.getKPIs().get(kpiLabel)), XSDDatatype.XSDdouble);
 
+                    //////extra little thing
+                    Property ts = this.finalModel.createProperty("http://w3id.org/hobbit/experiments#sizeOfReceived");
+                    obs.addProperty(ts, String.valueOf(task.getReceivedSize()), XSDDatatype.XSDinteger);
+                    
+                    Property ts2 = this.finalModel.createProperty("http://w3id.org/hobbit/experiments#sizeOfExpected");
+                    obs.addProperty(ts2, String.valueOf(task.getExpectedSize()), XSDDatatype.XSDinteger);
+                    
                     if (kpiLabel.equalsIgnoreCase("recall")) {
                         double recall = task.getKPIs().get(kpiLabel);
                         if (recall == 1.0d) {

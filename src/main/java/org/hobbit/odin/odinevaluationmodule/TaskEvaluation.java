@@ -11,15 +11,26 @@ import java.util.HashMap;
  */
 public class TaskEvaluation {
 
+    private int receivedSize = 0;
+    private int expectedSize = 0;
+    
+    public int getReceivedSize() {
+        return receivedSize;
+    }
+
+    public int getExpectedSize() {
+        return expectedSize;
+    }
     private HashMap<String, Double> kpis = new HashMap<String, Double>();
 
-    public TaskEvaluation(double rec, double pr, double tps, double answerDelay) {
+    public TaskEvaluation(double rec, double pr, double tps, double answerDelay, int receivedSize, int expectedSize) {
         kpis.put("Recall", rec);
         kpis.put("Precision", pr);
         kpis.put("TPS", tps);
         kpis.put("Fmeasure", (double) (2.0 * rec * pr) / (double) (rec + pr));
         kpis.put("Delay", answerDelay);
-
+        this.receivedSize = receivedSize;
+        this.expectedSize = expectedSize;
     }
 
     public HashMap<String, Double> getKPIs() {

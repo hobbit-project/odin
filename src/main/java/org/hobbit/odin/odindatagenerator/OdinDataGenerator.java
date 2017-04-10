@@ -48,6 +48,7 @@ public class OdinDataGenerator extends AbstractDataGenerator {
     private int DATA_GENERATOR_INSERT_QUERIES;
     /* Initial select query delay */
     private long initialSelectDelay = 1000l;
+
     /*
      * Map with keys the ID of each stream and as value the corresponding stream
      */
@@ -66,8 +67,8 @@ public class OdinDataGenerator extends AbstractDataGenerator {
 
     private Semaphore minMaxTimestampMutex = new Semaphore(0);
 
-    private int insertCounter = 0;
-    private int selectCounter = 0;
+    // private int insertCounter = 0;
+    // private int selectCounter = 0;
     /* Byte array for the Task Generator */
     private byte[] task;
 
@@ -214,36 +215,31 @@ public class OdinDataGenerator extends AbstractDataGenerator {
     public class SelectThread implements Runnable {
         /* Select Query instance */
         private SelectQueryInfo selectQuery = null;
-        /* Current stream begin point */
-        private long beginPoint = 0l;
         /* Current stream end point */
-        private long endPoint = 0l;
+        private long beginPoint = 0l;
         /*
          * Size of the current stream (sum of all triples of all INSERT queries)
          */
         private long modelSize = 0l;
 
         /* Constructor */
-        public SelectThread(SelectQueryInfo s, long bP, long eP, long size) {
+        public SelectThread(SelectQueryInfo s, long size, long e) {
             this.selectQuery = s;
-            this.beginPoint = bP;
-            this.endPoint = eP;
             this.modelSize = size;
+            this.beginPoint = e;
         }
 
         @Override
         public void run() {
-            
-            String select = this.selectQuery.getSelectQueryAsString();
 
+            String select = this.selectQuery.getSelectQueryAsString();
             byte[] expectedAnswers = this.selectQuery.getExpectedAnswers();
             // select query, modelsize, begin point, end point, answers
-            byte[][] answers = new byte[5][];
+            byte[][] answers = new byte[4][];
             answers[0] = RabbitMQUtils.writeString(select);
             answers[1] = RabbitMQUtils.writeString(String.valueOf(this.modelSize));
             answers[2] = RabbitMQUtils.writeString(String.valueOf(this.beginPoint));
-            answers[3] = RabbitMQUtils.writeString(String.valueOf(this.endPoint));
-            answers[4] = expectedAnswers;
+            answers[3] = expectedAnswers;
             setTask(RabbitMQUtils.writeByteArrays(answers));
 
             sentToTaskGenerator();
@@ -282,8 +278,6 @@ public class OdinDataGenerator extends AbstractDataGenerator {
 
         LOGGER.info("Assigning set of triples to time stamps.");
         TreeMap<Long, String> files = assignFilesToTimeStamps();
-        LOGGER.info(this.getGeneratorId()+" begin point "+files.firstKey());
-        LOGGER.info(this.getGeneratorId()+" end point "+files.lastKey());
 
         // get overall min and max time stamps
         ByteBuffer data = ByteBuffer.allocate(16);
@@ -490,7 +484,6 @@ public class OdinDataGenerator extends AbstractDataGenerator {
      */
     public Map<Long, ArrayList<String>> convertTimeStampsToNewInterval(TreeMap<Long, String> files) {
 
-        
         Map<Long, ArrayList<String>> insertList = new TreeMap<Long, ArrayList<String>>();
         for (Map.Entry<Long, String> entry : files.entrySet()) {
             Long oldTimeStamp = entry.getKey();
@@ -518,6 +511,7 @@ public class OdinDataGenerator extends AbstractDataGenerator {
             }
             insertList.get(newTS.longValue()).add(subFiles);
         }
+        LOGGER.info("Number of unique transformed time stamps: " + insertList.values().size());
         return insertList;
     }
 
@@ -541,7 +535,7 @@ public class OdinDataGenerator extends AbstractDataGenerator {
         long newPreviousTS = 0l;
         // stream IDs begin with 1
         int streamID = 1;
-        int insertCounter = 1;
+        int iCounter = 1;
         ReferenceSet reference = new ReferenceSet(getDATA_GENERATOR_OUTPUT_DATASET() + "TDB");
 
         int rest = insertList.size() % getDATA_GENERATOR_INSERT_QUERIES();
@@ -570,7 +564,7 @@ public class OdinDataGenerator extends AbstractDataGenerator {
             long newCurrentTS = newPreviousTS + delay;
 
             InsertQueryInfo insert = new InsertQueryInfo(newCurrentTS, delay);
-            insert.createInsertQuery(files, getDATA_GENERATOR_OUTPUT_DATASET(), insertCounter);
+            insert.createInsertQuery(files, getDATA_GENERATOR_OUTPUT_DATASET(), iCounter);
 
             originalPreviousTS = originalCurrentTS;
             newPreviousTS = newCurrentTS;
@@ -584,8 +578,8 @@ public class OdinDataGenerator extends AbstractDataGenerator {
 
             // if you are at the end of your list and you have some files
             // remaining that do not belong to a stream
-            if (((insertCounter == insertList.size()) && rest != 0)
-                    || ((insertCounter % getDATA_GENERATOR_INSERT_QUERIES()) == 0)) {
+            if (((iCounter == insertList.size()) && rest != 0)
+                    || ((iCounter % getDATA_GENERATOR_INSERT_QUERIES()) == 0)) {
 
                 // get last insert query
                 int lastInsertIndex = this.streams.get(streamID).getSizeOfInserts() - 1;
@@ -627,13 +621,14 @@ public class OdinDataGenerator extends AbstractDataGenerator {
                 this.streams.get(streamID).setEndPoint(selectQueryTS);
 
             }
-            if ((insertCounter % getDATA_GENERATOR_INSERT_QUERIES()) == 0) {
+            if ((iCounter % getDATA_GENERATOR_INSERT_QUERIES()) == 0) {
                 streamID++;
             }
 
-            insertCounter++;
+            iCounter++;
 
         }
+
     }
 
     @Override
@@ -645,6 +640,7 @@ public class OdinDataGenerator extends AbstractDataGenerator {
             minMaxTimestampMutex.release();
         }
         super.receiveCommand(command, data);
+        
     }
 
     /**
@@ -698,6 +694,7 @@ public class OdinDataGenerator extends AbstractDataGenerator {
             throw new RuntimeException();
 
         }
+        LOGGER.info("Number of unique original time stamps: " + files.size());
         return files;
     }
 
@@ -709,36 +706,36 @@ public class OdinDataGenerator extends AbstractDataGenerator {
         ExecutorService executor = Executors.newFixedThreadPool(poolSize);
         // for each time stamp
         for (Entry<Integer, Stream> entry : streams.entrySet()) {
+
             // get the the stream
             Stream stream = entry.getValue();
-            LOGGER.info("Dealing with stream No."+stream.getID());
+            LOGGER.info("Dealing with stream No." + stream.getID());
             ArrayList<InsertQueryInfo> insertQueries = stream.getInsertQueries();
-
-            long firstStreamInsertTS = stream.getBeginPoint();
-            long lastStreamInsertTS = stream.getEndPoint();
-
+            long streamBeginPoint = 0l;
+            
             for (int i = 0; i < insertQueries.size(); i++) {
-                insertCounter++;
-                LOGGER.info("Sending INSERT SPARQL query No."+insertCounter);
+                // insertCounter++;
+                // LOGGER.info("Sending INSERT SPARQL query No."+insertCounter);
                 InsertQueryInfo currentInsertQuery = insertQueries.get(i);
                 InsertThread insertThread = new InsertThread(currentInsertQuery);
                 Thread.sleep(currentInsertQuery.getDelay());
+                if (i == 0) {
+                    streamBeginPoint = System.currentTimeMillis();
+                }
                 executor.execute(insertThread);
 
             }
-            selectCounter++;
-            LOGGER.info("Sending SELECT SPARQL query No."+selectCounter);
+            // selectCounter++;
+            // LOGGER.info("Sending SELECT SPARQL query No."+selectCounter);
             SelectQueryInfo selectQuery = stream.getSelectQuery();
             long modelSize = stream.getStreamModelSize();
-            SelectThread selectThread = new SelectThread(selectQuery, firstStreamInsertTS, lastStreamInsertTS,
-                    modelSize);
+            SelectThread selectThread = new SelectThread(selectQuery, modelSize, streamBeginPoint);
             Thread.sleep(selectQuery.getDelay());
             executor.execute(selectThread);
 
         }
         executor.shutdown();
         executor.awaitTermination(2, TimeUnit.HOURS);
-
 
     }
 

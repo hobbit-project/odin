@@ -43,21 +43,22 @@ public class OdinTaskGenerator extends AbstractTaskGenerator {
         // get an ID for the task
         String taskId = getNextTaskId();
 
+        ////////////////// SYSTEM ADAPTER QUERY/////////////////////////////
         ByteBuffer buffer = ByteBuffer.wrap(data);
         // read the select query for System Adapter
         String selectQuery = RabbitMQUtils.readString(buffer);
+        // Create the task and the expected answer
+        byte[] task = RabbitMQUtils.writeByteArrays(new byte[][] { RabbitMQUtils.writeString(selectQuery) });
+        /////////////////////////////////////////////////////////////////////////
 
-        // read info for Evaluation Storage
+        ////////////////// EVALUATION MODULE DATA/////////////////////////////
         String modelSize = RabbitMQUtils.readString(buffer);
         String beginPoint = RabbitMQUtils.readString(buffer);
-        String endPoint = RabbitMQUtils.readString(buffer);
         // read expected answers from buffer
         InputStream inExpected = new ByteArrayInputStream(
                 RabbitMQUtils.readString(buffer).getBytes(StandardCharsets.UTF_8));
-        // convert them to ResultSet
+        // convert them to ResultSet and then to JSON format
         ResultSet expected = ResultSetFactory.fromJSON(inExpected);
-        // convert ResultSet to ByteArrayOutputStream and then do
-        // outputStream.toByteArray() to convert them again to byte[]
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         ResultSetFormatter.outputAsJSON(outputStream, expected);
 
@@ -65,15 +66,13 @@ public class OdinTaskGenerator extends AbstractTaskGenerator {
         byte[][] expectedAnswer = new byte[4][];
         expectedAnswer[0] = RabbitMQUtils.writeString(modelSize);
         expectedAnswer[1] = RabbitMQUtils.writeString(beginPoint);
-        expectedAnswer[2] = RabbitMQUtils.writeString(endPoint);
-        expectedAnswer[3] = outputStream.toByteArray();
-
-        // Create the task and the expected answer
-        byte[] task = RabbitMQUtils.writeByteArrays(new byte[][] { RabbitMQUtils.writeString(selectQuery) });
-        byte[] expectedAnswerData = RabbitMQUtils.writeByteArrays(expectedAnswer);
-
-        // Send the task to the system (and store the timestamp)
         long taskSentTimestamp = System.currentTimeMillis();
+        expectedAnswer[2] = RabbitMQUtils.writeString(String.valueOf(taskSentTimestamp));
+        expectedAnswer[3] = outputStream.toByteArray();
+        byte[] expectedAnswerData = RabbitMQUtils.writeByteArrays(expectedAnswer);
+        /////////////////////////////////////////////////////////////////////////
+        
+        // Send the task to the system (and store the timestamp)
         sendTaskToSystemAdapter(taskId, task);
         LOGGER.info("Data sent to System Adapter.");
 

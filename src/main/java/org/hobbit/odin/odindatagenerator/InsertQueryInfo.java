@@ -32,7 +32,7 @@ public class InsertQueryInfo {
      */
     private long delay = 0l;
     /* Location file where the query is stored */
-    private String InsertFile = null;
+    private String insertFile = null;
     /* Number of triples included in the query */
     private long modelSize = 0l;
 
@@ -67,11 +67,11 @@ public class InsertQueryInfo {
     }
 
     public String getInsertFile() {
-        return this.InsertFile;
+        return this.insertFile;
     }
 
     public void setInsertFile(String files) {
-        this.InsertFile = files;
+        this.insertFile = files;
     }
 
     /**
@@ -113,7 +113,7 @@ public class InsertQueryInfo {
         IndentedWriter out = new IndentedWriter(outStream);
         insertQuery.output(out);
 
-        this.InsertFile = fileName;
+        this.insertFile = fileName;
         this.modelSize = completeModel.size();
     }
 
@@ -126,7 +126,7 @@ public class InsertQueryInfo {
     public String getUpdateRequestAsString() {
         String fileContent = null;
         try {
-            fileContent = FileUtils.readFileToString(new File(this.InsertFile), Charsets.UTF_8);
+            fileContent = FileUtils.readFileToString(new File(this.insertFile), Charsets.UTF_8);
         } catch (IOException e) {
             e.printStackTrace();
         }

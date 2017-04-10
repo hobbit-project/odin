@@ -33,6 +33,11 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
     private static final Logger LOGGER = LoggerFactory.getLogger(VirtuosoSystemAdapter.class);
     public String virtuosoContName = null;
 
+    private int selectsReceived = 0;
+    private int selectsProcessed = 0;
+    
+    private int insertsReceived = 0;
+    private int insertsProcessed = 0;
     private org.aksw.jena_sparql_api.core.QueryExecutionFactory queryExecFactory;
     private org.aksw.jena_sparql_api.core.UpdateExecutionFactory updateExecFactory;
 
@@ -93,7 +98,7 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
     @Override
     public void receiveGeneratedData(byte[] arg0) {
         LOGGER.info("INSERT SPARQL query received.");
-
+        this.insertsReceived++;
         ByteBuffer buffer = ByteBuffer.wrap(arg0);
         // read the insert query
         String insertQuery = RabbitMQUtils.readString(buffer);
@@ -107,12 +112,15 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
         }
 
         LOGGER.info("INSERT SPARQL query has been processed.");
+        this.insertsProcessed++;
+        
+        
     }
 
     @Override
     public void receiveGeneratedTask(String arg0, byte[] arg1) {
         LOGGER.info("SELECT SPARQL query received.");
-
+        this.selectsReceived++;
         String taskId = arg0;
         // read select query
         ByteBuffer buffer = ByteBuffer.wrap(arg1);
@@ -138,6 +146,7 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
             qe.close();
         }
         LOGGER.info("SELECT SPARQL query has been processed.");
+        this.selectsProcessed++;
 
     }
 
@@ -154,6 +163,13 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
         this.stopContainer(virtuosoContName);
         super.close();
         LOGGER.info("Virtuoso has stopped.");
+        
+        if(this.insertsProcessed != this.insertsReceived){
+            LOGGER.error("INSERT queries received and processed are not equal");
+        }
+        if(this.selectsProcessed != this.selectsReceived){
+            LOGGER.error("SELECT queries received and processed are not equal");
+        }
     }
 
 }
