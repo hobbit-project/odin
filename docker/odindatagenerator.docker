@@ -1,4 +1,4 @@
-FROM java
+FROM maven:3.3.9-jdk-8-alpine
 
 ADD target/odin-1.0.0-SNAPSHOT.jar /odin/odin.jar
 
@@ -7,5 +7,3 @@ ADD scripts/download.sh /odin/download.sh
 WORKDIR /odin
 
 CMD java -cp odin.jar org.hobbit.core.run.ComponentStarter org.hobbit.odin.odindatagenerator.OdinDataGenerator
-
-
