@@ -48,6 +48,7 @@ public class OdinDataGenerator extends AbstractDataGenerator {
     private int DATA_GENERATOR_INSERT_QUERIES;
     /* Initial select query delay */
     private long initialSelectDelay = 1000l;
+    private String defaultGraph = null;
 
     /*
      * Map with keys the ID of each stream and as value the corresponding stream
@@ -66,6 +67,7 @@ public class OdinDataGenerator extends AbstractDataGenerator {
     private long datasetBeginPoint = 0l;
 
     private Semaphore minMaxTimestampMutex = new Semaphore(0);
+    private Semaphore bulkLoadMutex = new Semaphore(0);
 
     // private int insertCounter = 0;
     // private int selectCounter = 0;
@@ -181,9 +183,10 @@ public class OdinDataGenerator extends AbstractDataGenerator {
             String insert = this.insertQuery.getUpdateRequestAsString();
             // serialize insert query into a byte array and send it to the
             // system adapter
-            byte[] insertData = RabbitMQUtils.writeByteArrays(new byte[][] { RabbitMQUtils.writeString(insert) });
-            sentToSystemAdapter(insertData);
-
+            byte[][] insertData = new byte[2][];
+            insertData[0] = RabbitMQUtils.writeByteArrays(new byte[][] { RabbitMQUtils.writeString(defaultGraph) });
+            insertData[1] = RabbitMQUtils.writeByteArrays(new byte[][] { RabbitMQUtils.writeString(insert) });
+            sentToSystemAdapter(RabbitMQUtils.writeByteArrays(insertData));
         }
 
         /**
@@ -268,6 +271,7 @@ public class OdinDataGenerator extends AbstractDataGenerator {
         super.init();
         this.internalInit();
 
+        this.defaultGraph = "http://www.graph" + this.getGeneratorId() + ".com/";
         LOGGER.info("Invoking mimicking algorithm: " + this.getDATA_GENERATOR_DATASET_NAME());
         // call mimicking algorithm
         runMimicking();
@@ -546,7 +550,7 @@ public class OdinDataGenerator extends AbstractDataGenerator {
             ArrayList<String> files = entry.getValue();
 
             // insert triple into Jena TDB
-            reference.updateTDB(files);
+            reference.updateTDB(files, defaultGraph);
 
             long delay = (long) ((originalCurrentTS - originalPreviousTS) / (Math.pow(2, (streamID - 1))));
             // last stream must have 0 delay
@@ -564,7 +568,7 @@ public class OdinDataGenerator extends AbstractDataGenerator {
             long newCurrentTS = newPreviousTS + delay;
 
             InsertQueryInfo insert = new InsertQueryInfo(newCurrentTS, delay);
-            insert.createInsertQuery(files, getDATA_GENERATOR_OUTPUT_DATASET(), iCounter);
+            insert.createInsertQuery(files, getDATA_GENERATOR_OUTPUT_DATASET(), iCounter, this.defaultGraph);
 
             originalPreviousTS = originalCurrentTS;
             newPreviousTS = newCurrentTS;
@@ -584,8 +588,6 @@ public class OdinDataGenerator extends AbstractDataGenerator {
                 // get last insert query
                 int lastInsertIndex = this.streams.get(streamID).getSizeOfInserts() - 1;
                 InsertQueryInfo lastInsertQuery = this.streams.get(streamID).getInsertQueryInfo(lastInsertIndex);
-                // get the file that it is stored
-                String insertQueryAsString = lastInsertQuery.getUpdateRequestAsString();
 
                 // create the select query of the stream
                 SelectQueryInfo selectQuery = new SelectQueryInfo();
@@ -607,7 +609,8 @@ public class OdinDataGenerator extends AbstractDataGenerator {
                 selectQuery.setTimeStamp(selectQueryTS);
                 // create the select query given the last insert query of the
                 // current batch
-                selectQuery.createSelectQuery(insertQueryAsString, getDATA_GENERATOR_OUTPUT_DATASET(), streamID);
+                selectQuery.createSelectQuery(lastInsertQuery.getModelFile(), getDATA_GENERATOR_OUTPUT_DATASET(),
+                        streamID, defaultGraph);
                 // create a reference set for this select query
                 String resultSetFile = reference.queryTDB(selectQuery.getSelectQueryAsString(),
                         getDATA_GENERATOR_OUTPUT_DATASET(), streamID);
@@ -638,9 +641,11 @@ public class OdinDataGenerator extends AbstractDataGenerator {
             this.datasetBeginPoint = buffer.getLong();
             this.datasetEndPoint = buffer.getLong();
             minMaxTimestampMutex.release();
+        } else if (OdinConstants.BULK_LOAD_FROM_CONTROLLER == command) {
+            bulkLoadMutex.release();
         }
         super.receiveCommand(command, data);
-        
+
     }
 
     /**
@@ -700,8 +705,17 @@ public class OdinDataGenerator extends AbstractDataGenerator {
 
     @Override
     protected void generateData() throws Exception {
-        LOGGER.info("Data Generator is running..");
 
+        LOGGER.info("Start bulk loading phase for Data Genetaror " + this.getGeneratorId());
+        byte[] graph = RabbitMQUtils.writeByteArrays(new byte[][] { RabbitMQUtils.writeString(this.defaultGraph) });
+        sendDataToSystemAdapter(graph);
+        sendToCmdQueue(OdinConstants.BULK_LOAD_FROM_DATAGENERATOR);
+        bulkLoadMutex.acquire();
+        LOGGER.info("Bulk loading phase finished for Data Generator " + this.getGeneratorId());
+
+        //////////////////////////////////////////////////////////////////////////////////
+        
+        LOGGER.info("Data Generator " + this.getGeneratorId() + " is running..");
         int poolSize = streams.values().size() + streams.size();
         ExecutorService executor = Executors.newFixedThreadPool(poolSize);
         // for each time stamp
@@ -712,7 +726,7 @@ public class OdinDataGenerator extends AbstractDataGenerator {
             LOGGER.info("Dealing with stream No." + stream.getID());
             ArrayList<InsertQueryInfo> insertQueries = stream.getInsertQueries();
             long streamBeginPoint = 0l;
-            
+
             for (int i = 0; i < insertQueries.size(); i++) {
                 // insertCounter++;
                 // LOGGER.info("Sending INSERT SPARQL query No."+insertCounter);
@@ -736,6 +750,7 @@ public class OdinDataGenerator extends AbstractDataGenerator {
         }
         executor.shutdown();
         executor.awaitTermination(2, TimeUnit.HOURS);
+        LOGGER.info("Data Generator " + this.getGeneratorId() + " is done.");
 
     }
 

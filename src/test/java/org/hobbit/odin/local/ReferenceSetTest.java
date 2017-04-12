@@ -65,7 +65,7 @@ public class ReferenceSetTest {
             ArrayList<String> files = new ArrayList<String>();
             files.add(filePath);
 
-            rset.updateTDB(files);
+            rset.updateTDB(files,"http://www.virtuoso-graph.com/");
 
             String resultsFile = rset.queryTDB(selectQuery,
                     System.getProperty("user.dir") + "/src/test/resources/data/debug_data/referenceSet/", filesCounter);

@@ -17,22 +17,21 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.Path;
 
-import org.aksw.jena_sparql_api.core.utils.UpdateRequestUtils;
 import org.apache.jena.atlas.io.IndentedWriter;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryFactory;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.rdf.model.StmtIterator;
+import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.OpAsQuery;
 import org.apache.jena.sparql.algebra.op.OpBGP;
 import org.apache.jena.sparql.core.BasicPattern;
-import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Var;
-import org.apache.jena.sparql.modify.request.UpdateDataInsert;
-import org.apache.jena.update.Update;
-import org.apache.jena.update.UpdateRequest;
 import org.apache.log4j.Logger;
 
 /**
@@ -118,7 +117,7 @@ public class SelectQueryInfo {
         try {
             data = Files.readAllBytes(path);
         } catch (IOException e) {
-            logger.error("Unable to retrieve expected answers from "+this.answersFile);
+            logger.error("Unable to retrieve expected answers from " + this.answersFile);
             throw new RuntimeException();
         }
         return data;
@@ -149,86 +148,82 @@ public class SelectQueryInfo {
      * @param streamCounter,
      *            the ID of the stream that the SELECT query belongs to
      */
-    public void createSelectQuery(String insertQueryAsString, String outputFolder, int streamCounter) {
+    public void createSelectQuery(String modelFile, String outputFolder, int streamCounter, String graphName) {
 
         outputFolder = outputFolder + "selectQueries/";
         File newFolder = new File(outputFolder);
         if (!newFolder.exists())
             newFolder.mkdir();
 
+        Model model = RDFDataMgr.loadModel(modelFile);
         HashMap<Integer, ArrayList<Triple>> patternsToTriples = new HashMap<Integer, ArrayList<Triple>>();
         Map<Node, HashMap<Integer, ArrayList<Integer>>> resultSet = new HashMap<Node, HashMap<Integer, ArrayList<Integer>>>();
+        StmtIterator it = model.listStatements();
+        int quadCounter = 1;
+        
+        while (it.hasNext()) {
+            Statement statement = it.next();
+            Triple triple = statement.asTriple();
 
-        // convert insert query to update request and parse it to create atomic
-        // triple patterns
-        UpdateRequest insert = UpdateRequestUtils.parse(insertQueryAsString);
-        List<Update> updates = insert.getOperations();
-        for (Update update : updates) {
-            if (update instanceof UpdateDataInsert) {
-                List<Quad> quads = ((UpdateDataInsert) update).getQuads();
-                int quadCounter = 1;
-                for (Quad quad : quads) {
-                    Triple triple = quad.asTriple();
+            Node subject = triple.getSubject();
+            Node predicate = triple.getPredicate();
+            Node object = triple.getObject();
 
-                    Node subject = triple.getSubject();
-                    Node predicate = triple.getPredicate();
-                    Node object = triple.getObject();
+            // create one triple pattern for each triple Node
+            Triple newTriple = null;
+            patternsToTriples.put(quadCounter, new ArrayList<Triple>());
 
-                    // create one triple pattern for each triple Node
-                    Triple newTriple = null;
-                    patternsToTriples.put(quadCounter, new ArrayList<Triple>());
+            // for subject:
+            Node subjectVariable = NodeFactory.createVariable("?");
+            newTriple = new Triple(subjectVariable, predicate, object);
 
-                    // for subject:
-                    Node subjectVariable = NodeFactory.createVariable("?");
-                    newTriple = new Triple(subjectVariable, predicate, object);
+            patternsToTriples.get(quadCounter).add(0, newTriple);
 
-                    patternsToTriples.get(quadCounter).add(0, newTriple);
-
-                    if (!resultSet.containsKey(subject)) {
-                        resultSet.put(subject, new HashMap<Integer, ArrayList<Integer>>());
-                    }
-                    HashMap<Integer, ArrayList<Integer>> map = resultSet.get(subject);
-                    if (!map.containsKey(quadCounter)) {
-                        map.put(quadCounter, new ArrayList<Integer>());
-                    }
-                    map.get(quadCounter).add(0);
-                    //////////////////////////////
-
-                    // for predicate:
-                    Node predicateVariable = NodeFactory.createVariable("?");
-                    newTriple = new Triple(subject, predicateVariable, object);
-                    patternsToTriples.get(quadCounter).add(1, newTriple);
-
-                    if (!resultSet.containsKey(predicate)) {
-                        resultSet.put(predicate, new HashMap<Integer, ArrayList<Integer>>());
-                    }
-                    map = resultSet.get(predicate);
-                    if (!map.containsKey(quadCounter)) {
-                        map.put(quadCounter, new ArrayList<Integer>());
-                    }
-                    map.get(quadCounter).add(1);
-                    //////////////////////////////
-
-                    // for object:
-                    Node objectVariable = NodeFactory.createVariable("?");
-                    newTriple = new Triple(subject, predicate, objectVariable);
-                    patternsToTriples.get(quadCounter).add(2, newTriple);
-
-                    if (!resultSet.containsKey(object)) {
-                        resultSet.put(object, new HashMap<Integer, ArrayList<Integer>>());
-                    }
-                    map = resultSet.get(object);
-                    if (!map.containsKey(quadCounter)) {
-                        map.put(quadCounter, new ArrayList<Integer>());
-                    }
-                    map.get(quadCounter).add(2);
-                    //////////////////////////////
-
-                    quadCounter++;
-                }
+            if (!resultSet.containsKey(subject)) {
+                resultSet.put(subject, new HashMap<Integer, ArrayList<Integer>>());
             }
-            break;
+            HashMap<Integer, ArrayList<Integer>> map = resultSet.get(subject);
+            if (!map.containsKey(quadCounter)) {
+                map.put(quadCounter, new ArrayList<Integer>());
+            }
+            map.get(quadCounter).add(0);
+            //////////////////////////////
+
+            // for predicate:
+            Node predicateVariable = NodeFactory.createVariable("?");
+            newTriple = new Triple(subject, predicateVariable, object);
+            patternsToTriples.get(quadCounter).add(1, newTriple);
+
+            if (!resultSet.containsKey(predicate)) {
+                resultSet.put(predicate, new HashMap<Integer, ArrayList<Integer>>());
+            }
+            map = resultSet.get(predicate);
+            if (!map.containsKey(quadCounter)) {
+                map.put(quadCounter, new ArrayList<Integer>());
+            }
+            map.get(quadCounter).add(1);
+            //////////////////////////////
+
+            // for object:
+            Node objectVariable = NodeFactory.createVariable("?");
+            newTriple = new Triple(subject, predicate, objectVariable);
+            patternsToTriples.get(quadCounter).add(2, newTriple);
+
+            if (!resultSet.containsKey(object)) {
+                resultSet.put(object, new HashMap<Integer, ArrayList<Integer>>());
+            }
+            map = resultSet.get(object);
+            if (!map.containsKey(quadCounter)) {
+                map.put(quadCounter, new ArrayList<Integer>());
+            }
+            map.get(quadCounter).add(2);
+            //////////////////////////////
+
+            quadCounter++;
+        
+
         }
+
         // sort result set based on how many triples they appear
         List<Map.Entry<Node, HashMap<Integer, ArrayList<Integer>>>> entries = new ArrayList<>(resultSet.entrySet());
         Collections.sort(entries, new Comparator<Map.Entry<Node, HashMap<Integer, ArrayList<Integer>>>>() {
@@ -309,6 +304,7 @@ public class SelectQueryInfo {
 
         op = new OpBGP(pat);
         Query q = OpAsQuery.asQuery(op); // Convert to a query
+        q.addGraphURI(graphName);
         q.setQuerySelectType();
         // save to output
         OutputStream outStream = null;
@@ -317,7 +313,7 @@ public class SelectQueryInfo {
             outStream = new FileOutputStream(fileName);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
-            logger.error("File doesn't exist. "+fileName);
+            logger.error("File doesn't exist. " + fileName);
             throw new RuntimeException();
         }
         IndentedWriter out = new IndentedWriter(outStream);

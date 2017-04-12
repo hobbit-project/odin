@@ -17,23 +17,30 @@ public class SelectQueryInfoTest {
 
         String directory = System.getProperty("user.dir")
                 + "/src/test/resources/data/debug_data/selectQuery/insertQueries/";
-        FileUtils.deleteDirectory(new File(
-                System.getProperty("user.dir") + "/src/test/resources/data/debug_data/referenceSet/selectQuery/selectQueries"));
+        FileUtils.deleteDirectory(new File(System.getProperty("user.dir")
+                + "/src/test/resources/data/debug_data/referenceSet/selectQuery/selectQueries"));
         File[] listOfFiles = (new File(directory)).listFiles();
         int filesCounter = 1;
         for (File file : listOfFiles) {
+            if (file.getName().endsWith(".ttl"))
+                continue;
+
             String filePath = directory + file.getName();
             InsertQueryInfo insertQueryInfo = new InsertQueryInfo((long) filesCounter, (long) filesCounter * 100);
             insertQueryInfo.setInsertFile(filePath);
-            String insertQueryAsString = insertQueryInfo.getUpdateRequestAsString();
+            String modelFile = null;
+            if (file.getName().indexOf("1") != -1) {
+                modelFile = directory + "model1.ttl";
+            } else
+                modelFile = directory + "model2.ttl";
 
             SelectQueryInfo selectQueryInfo = new SelectQueryInfo((long) filesCounter, null);
-            selectQueryInfo.createSelectQuery(insertQueryAsString,
-                    System.getProperty("user.dir") + "/src/test/resources/data/debug_data/selectQuery/",
-                    filesCounter);
+            selectQueryInfo.createSelectQuery(modelFile,
+                    System.getProperty("user.dir") + "/src/test/resources/data/debug_data/selectQuery/", filesCounter,
+                    "http://www.virtuoso-graph.com/");
 
             assertTrue(selectQueryInfo.getSelectQueryAsString() != null);
-
+            assertTrue(selectQueryInfo.getSelectQueryAsString().indexOf("FROM") != -1);
             filesCounter++;
         }
     }

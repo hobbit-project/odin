@@ -2,6 +2,7 @@ package org.hobbit.odin;
 
 import org.hobbit.core.Commands;
 import org.hobbit.core.components.AbstractBenchmarkController;
+import org.hobbit.odin.systems.virtuoso.VirtuosoSystemAdapterConstants;
 import org.hobbit.odin.util.OdinConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +32,9 @@ public class OdinBenchmarkController extends AbstractBenchmarkController {
     private static final String EVALUATION_MODULE_CONTAINER_IMAGE = "git.project-hobbit.eu:4567/kleanthie.georgala/odinevaluationmodule";
 
     private Semaphore minMaxTimestampMutex = new Semaphore(0);
+
+    private Semaphore bulkLoadMutex = new Semaphore(0);
+    private Semaphore sysAdapterMutex = new Semaphore(0);
 
     private int numberOfDataGenerators = -1;
     private int numberOfTaskGenerators = -1;
@@ -264,6 +268,12 @@ public class OdinBenchmarkController extends AbstractBenchmarkController {
                 this.timestampsMax = maxTS;
 
             minMaxTimestampMutex.release();
+        } else if (OdinConstants.BULK_LOAD_FROM_DATAGENERATOR == command) {
+            //this will be send by data gens
+            bulkLoadMutex.release();
+        } else if (VirtuosoSystemAdapterConstants.BULK_LOADING_DATA_FINISHED == command) {
+            //this will be send by the sys adapter
+            sysAdapterMutex.release();
         }
         super.receiveCommand(command, data);
     }
@@ -275,6 +285,14 @@ public class OdinBenchmarkController extends AbstractBenchmarkController {
         // give the start signals
         sendToCmdQueue(Commands.TASK_GENERATOR_START_SIGNAL);
         sendToCmdQueue(Commands.DATA_GENERATOR_START_SIGNAL);
+        // wait until all data gens are done sending this message
+        bulkLoadMutex.acquire(numberOfDataGenerators);
+        // sends message to sys adapter
+        sendToCmdQueue(VirtuosoSystemAdapterConstants.BULK_LOAD_DATA_GEN_FINISHED);
+        //wait until message is received from sys adapter to continue
+        sysAdapterMutex.acquire(1);
+        //send message to data gens to go ahead
+        sendToCmdQueue(OdinConstants.BULK_LOAD_FROM_CONTROLLER);
         // wait for the data generators to finish their work
         waitForDataGenToFinish();
         // wait for the task generators to finish their work

@@ -2,6 +2,7 @@ package org.hobbit.odin.systems.virtuoso;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -19,6 +20,7 @@ import org.apache.jena.sparql.core.DatasetDescription;
 import org.apache.jena.update.UpdateRequest;
 import org.hobbit.core.components.AbstractSystemAdapter;
 import org.hobbit.core.rabbit.RabbitMQUtils;
+import org.hobbit.odin.util.OdinConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,11 +37,15 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
 
     private int selectsReceived = 0;
     private int selectsProcessed = 0;
-    
+
     private int insertsReceived = 0;
     private int insertsProcessed = 0;
     private org.aksw.jena_sparql_api.core.QueryExecutionFactory queryExecFactory;
     private org.aksw.jena_sparql_api.core.UpdateExecutionFactory updateExecFactory;
+
+    private boolean phase2 = true;
+
+    List<String> graphUris = new ArrayList<String>();
 
     public VirtuosoSystemAdapter() {
     }
@@ -67,13 +73,14 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
                 "DEFAULT_GRAPH=http://www.virtuoso-graph.com/" };
         virtuosoContName = this.createContainer("tenforce/virtuoso:latest", envVariablesVirtuoso);
 
-        // Create query execution factory
+        // Create query execution factory for the test select query
+        // will be overriden after BULK_LOADING_DATA_FINISHED signal is
+        // received
         queryExecFactory = new QueryExecutionFactoryHttp("http://" + virtuosoContName + ":8890/sparql",
                 "http://www.virtuoso-graph.com/");
         queryExecFactory = new QueryExecutionFactoryPaginated(queryExecFactory, 100);
 
         String test = "select ?x ?p ?o \n" + "where { \n" + "?x ?p ?o \n" + "}";
-
         ResultSet testResults = null;
         while (testResults == null) {
             LOGGER.info("Using " + "http://" + virtuosoContName + ":8890/sparql" + " to run test select query");
@@ -89,32 +96,61 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
             }
         }
 
-        HttpAuthenticator auth = new SimpleAuthenticator("dba", "dba".toCharArray());
-        List<String> graphUris = Arrays.asList("http://www.virtuoso-graph.com/");
-        updateExecFactory = new UpdateExecutionFactoryHttp("http://" + virtuosoContName + ":8890/sparql",
-                DatasetDescription.create(graphUris, graphUris), auth);
+    }
+
+    @Override
+    public void receiveCommand(byte command, byte[] data) {
+        if (VirtuosoSystemAdapterConstants.BULK_LOAD_DATA_GEN_FINISHED == command) {
+            // create execution factory
+            queryExecFactory = new QueryExecutionFactoryHttp("http://" + virtuosoContName + ":8890/sparql", graphUris);
+            queryExecFactory = new QueryExecutionFactoryPaginated(queryExecFactory, 100);
+
+            // create update factory
+            HttpAuthenticator auth = new SimpleAuthenticator("dba", "dba".toCharArray());
+            updateExecFactory = new UpdateExecutionFactoryHttp("http://" + virtuosoContName + ":8890/sparql",
+                    DatasetDescription.create(graphUris, graphUris), auth);
+            phase2 = false;
+            try {
+                sendToCmdQueue(VirtuosoSystemAdapterConstants.BULK_LOADING_DATA_FINISHED);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        super.receiveCommand(command, data);
     }
 
     @Override
     public void receiveGeneratedData(byte[] arg0) {
-        LOGGER.info("INSERT SPARQL query received.");
-        this.insertsReceived++;
-        ByteBuffer buffer = ByteBuffer.wrap(arg0);
-        // read the insert query
-        String insertQuery = RabbitMQUtils.readString(buffer);
-        // insert query
-        UpdateRequest updateRequest = UpdateRequestUtils.parse(insertQuery);
+        if (phase2 == true) {
+            ByteBuffer buffer = ByteBuffer.wrap(arg0);
+            // read the graph URI
+            String graphUri = RabbitMQUtils.readString(buffer);
+            graphUris.add(graphUri);
+        } else {
+            LOGGER.info("INSERT SPARQL query received.");
+            this.insertsReceived++;
+            ByteBuffer buffer = ByteBuffer.wrap(arg0);
+            // read the graph uri, do nothing
+            String graphUri = RabbitMQUtils.readString(buffer);
+            if(!graphUris.contains(graphUri)){
+                LOGGER.error(graphUri+ "is not included in the default/named graphs of Virtuoso");
+                throw new RuntimeException();
+            }
+            //read the insert query
+            String insertQuery = RabbitMQUtils.readString(buffer);
+            // insert query
+            UpdateRequest updateRequest = UpdateRequestUtils.parse(insertQuery);
 
-        try {
-            updateExecFactory.createUpdateProcessor(updateRequest).execute();
-        } catch (Exception e) {
-            e.printStackTrace();
+            try {
+                updateExecFactory.createUpdateProcessor(updateRequest).execute();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            LOGGER.info("INSERT SPARQL query has been processed.");
+            this.insertsProcessed++;
         }
 
-        LOGGER.info("INSERT SPARQL query has been processed.");
-        this.insertsProcessed++;
-        
-        
     }
 
     @Override
@@ -163,11 +199,11 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
         this.stopContainer(virtuosoContName);
         super.close();
         LOGGER.info("Virtuoso has stopped.");
-        
-        if(this.insertsProcessed != this.insertsReceived){
+
+        if (this.insertsProcessed != this.insertsReceived) {
             LOGGER.error("INSERT queries received and processed are not equal");
         }
-        if(this.selectsProcessed != this.selectsReceived){
+        if (this.selectsProcessed != this.selectsReceived) {
             LOGGER.error("SELECT queries received and processed are not equal");
         }
     }

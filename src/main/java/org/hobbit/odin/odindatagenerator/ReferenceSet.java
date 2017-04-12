@@ -34,6 +34,7 @@ public class ReferenceSet {
     public ReferenceSet(String directory) {
         this.TDBDirectory = directory;
         this.dataset = TDBFactory.createDataset(this.TDBDirectory);
+        
     }
 
     /**
@@ -42,10 +43,10 @@ public class ReferenceSet {
      * @param files,
      *            the set of new files to be added
      */
-    public void updateTDB(ArrayList<String> files) {
+    public void updateTDB(ArrayList<String> files, String graphName) {
         dataset.begin(ReadWrite.WRITE);
         try {
-            Model tdb = dataset.getDefaultModel();
+            Model tdb = dataset.getNamedModel(graphName);
             // read the input files
             for (String file : files) {
                 Model m = RDFDataMgr.loadModel(file);

@@ -1,4 +1,5 @@
 SELECT  *
+FROM <http://www.virtuoso-graph.com/>
 WHERE
   { ?x1       a                     <http://www.myOntology.com#isEvent> ;
               <http://www.myOntology.com#Property24>  <http://www.myOntology.com#Subject82> ;

@@ -11,6 +11,10 @@ public final class OdinConstants {
     // =============== STRUCTURED BENCHMARK CONTROLLER CONSTANTS ===============
     public static final byte MIN_MAX_FROM_DATAGENERATOR = (byte) 200;
     public static final byte OVERALL_MIN_MAX = (byte) 201;
+    
+    public static final byte BULK_LOAD_FROM_DATAGENERATOR = (byte) 202;
+    public static final byte BULK_LOAD_FROM_CONTROLLER = (byte) 203;
+
 
     // =============== STRUCTURED DATA GENERATOR CONSTANTS ===============
     public static final String GENERATOR_SEED = "generator_seed";
