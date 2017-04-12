@@ -112,6 +112,7 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
             HttpAuthenticator auth = new SimpleAuthenticator("dba", "dba".toCharArray());
             updateExecFactory = new UpdateExecutionFactoryHttp("http://" + virtuosoContName + ":8890/sparql",
                     DatasetDescription.create(graphUris, graphUris), auth);
+            
             phase2 = false;
             try {
                 sendToCmdQueue(VirtuosoSystemAdapterConstants.BULK_LOADING_DATA_FINISHED);
@@ -121,6 +122,10 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
             LOGGER.info("Received graph URIs:"+graphUris.size());
             for (String uri : this.graphUris) {
                 LOGGER.info(uri);
+                String create = "CREATE GRAPH "+uri;
+                UpdateRequest updateRequest = UpdateRequestUtils.parse(create);
+                updateExecFactory.createUpdateProcessor(updateRequest).execute();
+
             }
             LOGGER.info("Bulk phase is over.");
         }

@@ -183,10 +183,8 @@ public class OdinDataGenerator extends AbstractDataGenerator {
             String insert = this.insertQuery.getUpdateRequestAsString();
             // serialize insert query into a byte array and send it to the
             // system adapter
-            byte[][] insertData = new byte[2][];
-            insertData[0] = RabbitMQUtils.writeByteArrays(new byte[][] { RabbitMQUtils.writeString(defaultGraph) });
-            insertData[1] = RabbitMQUtils.writeByteArrays(new byte[][] { RabbitMQUtils.writeString(insert) });
-            sentToSystemAdapter(RabbitMQUtils.writeByteArrays(insertData));
+            sentToSystemAdapter(RabbitMQUtils.writeByteArrays(
+                    new byte[][] { RabbitMQUtils.writeString(defaultGraph), RabbitMQUtils.writeString(insert) }));
         }
 
         /**
@@ -714,7 +712,7 @@ public class OdinDataGenerator extends AbstractDataGenerator {
         LOGGER.info("Bulk loading phase finished for Data Generator " + this.getGeneratorId());
 
         //////////////////////////////////////////////////////////////////////////////////
-        
+
         LOGGER.info("Data Generator " + this.getGeneratorId() + " is running..");
         int poolSize = streams.values().size() + streams.size();
         ExecutorService executor = Executors.newFixedThreadPool(poolSize);
