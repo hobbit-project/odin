@@ -10,9 +10,14 @@ import java.util.ArrayList;
 import org.apache.commons.io.Charsets;
 import org.apache.commons.io.FileUtils;
 import org.apache.jena.atlas.io.IndentedWriter;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.sparql.modify.request.QuadAcc;
+import org.apache.jena.sparql.modify.request.UpdateDeleteInsert;
 import org.apache.jena.update.UpdateFactory;
 import org.apache.jena.update.UpdateRequest;
 import org.hobbit.storage.queries.SparqlQueries;
@@ -120,7 +125,7 @@ public class InsertQueryInfo {
         }
 
         // create insert query
-        String str = SparqlQueries.getUpdateQueryFromDiff(ModelFactory.createDefaultModel(), completeModel, graphName);
+        String str = getUpdateQueryFromDiff(ModelFactory.createDefaultModel(), completeModel, graphName);
         UpdateRequest insertQuery = UpdateFactory.create(str);
         // save to output
         OutputStream outStream = null;
@@ -136,7 +141,49 @@ public class InsertQueryInfo {
         this.insertFile = fileName;
         this.modelSize = completeModel.size();
     }
+    /**
+     * Generates a SPARQL UPDATE query based on the differences between the two
+     * given models. Triples that are present in the original model but not in
+     * the updated model will be put into the DELETE part of the query. Triples
+     * that are present in the updated model but can not be found in the
+     * original model will be put into the INSERT part of the query.
+     * 
+     * @param original
+     *            the original RDF model
+     * @param updated
+     *            the updated RDF model
+     * @param graphUri
+     *            the URI of the graph to which the UPDATE query should be
+     *            applied or <code>null</code>
+     * @return The SPARQL UPDATE query
+     */
+    public static final String getUpdateQueryFromDiff(Model original, Model updated, String graphUri) {
+        UpdateDeleteInsert update = new UpdateDeleteInsert();
+        Node graph = null;
+        if (graphUri != null) {
+            graph = NodeFactory.createURI(graphUri);
+            update.setWithIRI(graph);
+        }
+        StmtIterator iterator;
 
+        // deleted statements
+        Model temp = original.difference(updated);
+        iterator = temp.listStatements();
+        QuadAcc quads = update.getDeleteAcc();
+        while (iterator.hasNext()) {
+            quads.addTriple(iterator.next().asTriple());
+        }
+
+        // inserted statements
+        temp = updated.difference(original);
+        iterator = temp.listStatements();
+        quads = update.getInsertAcc();
+        while (iterator.hasNext()) {
+            quads.addTriple(iterator.next().asTriple());
+        }
+
+        return update.toString(original);
+    }
     /**
      * Reads the INSERT SPARQL query from a file and retrieves as UTF-8 encoded
      * String.

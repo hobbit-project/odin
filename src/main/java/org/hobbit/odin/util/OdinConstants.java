@@ -12,8 +12,8 @@ public final class OdinConstants {
     public static final byte MIN_MAX_FROM_DATAGENERATOR = (byte) 200;
     public static final byte OVERALL_MIN_MAX = (byte) 201;
     
-    public static final byte BULK_LOAD_FROM_DATAGENERATOR = (byte) 202;
-    public static final byte BULK_LOAD_FROM_CONTROLLER = (byte) 203;
+    public static final byte BULK_LOAD_FROM_DATAGENERATOR = (byte) 250;
+    public static final byte BULK_LOAD_FROM_CONTROLLER = (byte) 251;
 
 
     // =============== STRUCTURED DATA GENERATOR CONSTANTS ===============

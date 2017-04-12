@@ -1,6 +1,7 @@
 package org.hobbit.odin.systems.virtuoso;
 
 import java.io.IOException;
+import java.net.ConnectException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -11,6 +12,7 @@ import org.aksw.jena_sparql_api.core.utils.UpdateRequestUtils;
 import org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp;
 import org.aksw.jena_sparql_api.pagination.core.QueryExecutionFactoryPaginated;
 import org.apache.commons.io.output.ByteArrayOutputStream;
+import org.apache.http.conn.HttpHostConnectException;
 import org.apache.jena.atlas.web.auth.HttpAuthenticator;
 import org.apache.jena.atlas.web.auth.SimpleAuthenticator;
 import org.apache.jena.query.QueryExecution;
@@ -76,9 +78,9 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
         // Create query execution factory for the test select query
         // will be overriden after BULK_LOADING_DATA_FINISHED signal is
         // received
-        queryExecFactory = new QueryExecutionFactoryHttp("http://" + virtuosoContName + ":8890/sparql",
+        org.aksw.jena_sparql_api.core.QueryExecutionFactory queryExecFactory1 = new QueryExecutionFactoryHttp("http://" + virtuosoContName + ":8890/sparql",
                 "http://www.virtuoso-graph.com/");
-        queryExecFactory = new QueryExecutionFactoryPaginated(queryExecFactory, 100);
+        queryExecFactory1 = new QueryExecutionFactoryPaginated(queryExecFactory, 100);
 
         String test = "select ?x ?p ?o \n" + "where { \n" + "?x ?p ?o \n" + "}";
         ResultSet testResults = null;
@@ -86,9 +88,10 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
             LOGGER.info("Using " + "http://" + virtuosoContName + ":8890/sparql" + " to run test select query");
 
             // Create a QueryExecution object from a query string ...
-            QueryExecution qe = queryExecFactory.createQueryExecution(test);
             // and run it.
+            QueryExecution qe = null;
             try {
+                qe = queryExecFactory1.createQueryExecution(test);
                 testResults = qe.execSelect();
             } catch (Exception e) {
             } finally {
@@ -115,6 +118,10 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+            LOGGER.info("Received graph URIs:"+graphUris.size());
+            for (String uri : this.graphUris) {
+                LOGGER.info(uri);
+            }
             LOGGER.info("Bulk phase is over.");
         }
         super.receiveCommand(command, data);
@@ -126,7 +133,7 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
             ByteBuffer buffer = ByteBuffer.wrap(arg0);
             // read the graph URI
             String graphUri = RabbitMQUtils.readString(buffer);
-            LOGGER.info("Receiving graph URI "+graphUri);
+            LOGGER.info("Receiving graph URI " + graphUri);
             graphUris.add(graphUri);
         } else {
             LOGGER.info("INSERT SPARQL query received.");
@@ -134,11 +141,15 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
             ByteBuffer buffer = ByteBuffer.wrap(arg0);
             // read the graph uri, do nothing
             String graphUri = RabbitMQUtils.readString(buffer);
-            if(!graphUris.contains(graphUri)){
-                LOGGER.error(graphUri+ "is not included in the default/named graphs of Virtuoso");
+            LOGGER.info("Printing graph URIs:"+graphUris.size());
+            for (String uri : this.graphUris) {
+                LOGGER.info("I have: "+uri);
+            }
+            if (!graphUris.contains(graphUri)) {
+                LOGGER.error(graphUri + " is not included in the default/named graphs of Virtuoso");
                 throw new RuntimeException();
             }
-            //read the insert query
+            // read the insert query
             String insertQuery = RabbitMQUtils.readString(buffer);
             // insert query
             UpdateRequest updateRequest = UpdateRequestUtils.parse(insertQuery);
@@ -190,6 +201,13 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
 
     @Override
     public void close() throws IOException {
+        if (this.insertsProcessed != this.insertsReceived) {
+            LOGGER.error("INSERT queries received and processed are not equal");
+        }
+        if (this.selectsProcessed != this.selectsReceived) {
+            LOGGER.error("SELECT queries received and processed are not equal");
+        }
+        
         try {
             queryExecFactory.close();
         } catch (Exception e) {
@@ -202,12 +220,7 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
         super.close();
         LOGGER.info("Virtuoso has stopped.");
 
-        if (this.insertsProcessed != this.insertsReceived) {
-            LOGGER.error("INSERT queries received and processed are not equal");
-        }
-        if (this.selectsProcessed != this.selectsReceived) {
-            LOGGER.error("SELECT queries received and processed are not equal");
-        }
+        
     }
 
 }

@@ -285,12 +285,18 @@ public class OdinBenchmarkController extends AbstractBenchmarkController {
         // give the start signals
         sendToCmdQueue(Commands.TASK_GENERATOR_START_SIGNAL);
         sendToCmdQueue(Commands.DATA_GENERATOR_START_SIGNAL);
+        LOGGER.info("Send start signal to Data and Task Generators.");
         // wait until all data gens are done sending this message
+        LOGGER.info("Waiting until all Data Generators send message that they are done with bulk load phase.");
         bulkLoadMutex.acquire(numberOfDataGenerators);
+        LOGGER.info("Signal from ALL Data Generators received.");
         // sends message to sys adapter
+        LOGGER.info("Message sent to System Adapter that bulk load phase is over.");
         sendToCmdQueue(VirtuosoSystemAdapterConstants.BULK_LOAD_DATA_GEN_FINISHED);
         //wait until message is received from sys adapter to continue
+        LOGGER.info("Waiting until System Adapter sends message that it's done with bulk load phase.");
         sysAdapterMutex.acquire(1);
+        LOGGER.info("Signal from System Adapter received.");
         //send message to data gens to go ahead
         sendToCmdQueue(OdinConstants.BULK_LOAD_FROM_CONTROLLER);
         // wait for the data generators to finish their work
