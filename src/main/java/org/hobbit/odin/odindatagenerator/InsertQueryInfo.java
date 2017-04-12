@@ -116,7 +116,6 @@ public class InsertQueryInfo {
             completeModel.write(o, "ttl");
 
         } catch (FileNotFoundException e1) {
-            // TODO Auto-generated catch block
             e1.printStackTrace();
         }
 

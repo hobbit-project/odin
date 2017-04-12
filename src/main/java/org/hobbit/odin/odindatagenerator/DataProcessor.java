@@ -385,9 +385,7 @@ public class DataProcessor {
         // output directory of all mimicking files
         String fullNameDirectory = outputDirectory;
         File[] listOfFiles = (new File(fullNameDirectory)).listFiles();
-        for (File f : listOfFiles) {
-            logger.info(f.getAbsolutePath());
-        }
+        
         if (listOfFiles.length == 0) {
             logger.error("Mimicking algorithm did not return any data files.");
             throw new RuntimeException();

@@ -115,6 +115,7 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+            LOGGER.info("Bulk phase is over.");
         }
         super.receiveCommand(command, data);
     }
@@ -125,6 +126,7 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
             ByteBuffer buffer = ByteBuffer.wrap(arg0);
             // read the graph URI
             String graphUri = RabbitMQUtils.readString(buffer);
+            LOGGER.info("Receiving graph URI "+graphUri);
             graphUris.add(graphUri);
         } else {
             LOGGER.info("INSERT SPARQL query received.");
