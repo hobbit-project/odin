@@ -82,14 +82,28 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
+
         // Create query execution factory for the test select query
         // will be overriden after BULK_LOADING_DATA_FINISHED signal is
         // received
+
         /*
-         * org.aksw.jena_sparql_api.core.QueryExecutionFactory queryExecFactory1
-         * = new QueryExecutionFactoryHttp("http://" + virtuosoContName +
-         * ":8890/sparql", "http://www.virtuoso-graph.com/"); queryExecFactory1
-         * = new QueryExecutionFactoryPaginated(queryExecFactory, 100);
+         * org.aksw.jena_sparql_api.core.QueryExecutionFactory
+         * queryExecFactoryTest = new QueryExecutionFactoryHttp( "http://" +
+         * virtuosoContName + ":8890/sparql", "http://www.virtuoso-graph.com/");
+         * queryExecFactoryTest = new
+         * QueryExecutionFactoryPaginated(queryExecFactory, 100);
+         * 
+         * HttpAuthenticator auth = new SimpleAuthenticator("dba",
+         * "dba".toCharArray());
+         * org.aksw.jena_sparql_api.core.UpdateExecutionFactory
+         * updateExecFactoryTest = new UpdateExecutionFactoryHttp( "http://" +
+         * virtuosoContName + ":8890/sparql", auth);
+         * 
+         * String createTest = "CREATE GRAPH " + "<" +
+         * "http://www.virtuoso-graph.com/" + ">"; UpdateRequest updateRequest =
+         * UpdateRequestUtils.parse(createTest);
+         * updateExecFactoryTest.createUpdateProcessor(updateRequest).execute();
          * 
          * String test = "select ?x ?p ?o \n" + "where { \n" + "?x ?p ?o \n" +
          * "}"; ResultSet testResults = null; while (testResults == null) {
@@ -97,11 +111,12 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
          * + " to run test select query");
          * 
          * // Create a QueryExecution object from a query string ... // and run
-         * it. QueryExecution qe = null; try { qe =
-         * queryExecFactory1.createQueryExecution(test); testResults =
+         * it QueryExecution qe = null; try { qe =
+         * queryExecFactoryTest.createQueryExecution(test); testResults =
          * qe.execSelect(); } catch (Exception e) { } finally { qe.close(); } }
+         * try { queryExecFactoryTest.close(); } catch (Exception e) { } try {
+         * updateExecFactoryTest.close(); } catch (Exception e) { }
          */
-
     }
 
     @Override
@@ -120,7 +135,7 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
             // LOGGER.info("Received graph URIs:"+graphUris.size());
             for (String uri : this.graphUris) {
                 // LOGGER.info(uri);
-                String create = "CREATE GRAPH " + "<"+uri+">";
+                String create = "CREATE GRAPH " + "<" + uri + ">";
                 UpdateRequest updateRequest = UpdateRequestUtils.parse(create);
                 updateExecFactory.createUpdateProcessor(updateRequest).execute();
 
