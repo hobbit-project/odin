@@ -6,6 +6,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactoryHttp;
 import org.aksw.jena_sparql_api.core.utils.UpdateRequestUtils;
@@ -75,57 +76,60 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
                 "DEFAULT_GRAPH=http://www.virtuoso-graph.com/" };
         virtuosoContName = this.createContainer("tenforce/virtuoso:latest", envVariablesVirtuoso);
 
+        try {
+            TimeUnit.MINUTES.sleep(2);
+        } catch (InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
         // Create query execution factory for the test select query
         // will be overriden after BULK_LOADING_DATA_FINISHED signal is
         // received
-        org.aksw.jena_sparql_api.core.QueryExecutionFactory queryExecFactory1 = new QueryExecutionFactoryHttp("http://" + virtuosoContName + ":8890/sparql",
-                "http://www.virtuoso-graph.com/");
-        queryExecFactory1 = new QueryExecutionFactoryPaginated(queryExecFactory, 100);
-
-        String test = "select ?x ?p ?o \n" + "where { \n" + "?x ?p ?o \n" + "}";
-        ResultSet testResults = null;
-        while (testResults == null) {
-            LOGGER.info("Using " + "http://" + virtuosoContName + ":8890/sparql" + " to run test select query");
-
-            // Create a QueryExecution object from a query string ...
-            // and run it.
-            QueryExecution qe = null;
-            try {
-                qe = queryExecFactory1.createQueryExecution(test);
-                testResults = qe.execSelect();
-            } catch (Exception e) {
-            } finally {
-                qe.close();
-            }
-        }
+        /*
+         * org.aksw.jena_sparql_api.core.QueryExecutionFactory queryExecFactory1
+         * = new QueryExecutionFactoryHttp("http://" + virtuosoContName +
+         * ":8890/sparql", "http://www.virtuoso-graph.com/"); queryExecFactory1
+         * = new QueryExecutionFactoryPaginated(queryExecFactory, 100);
+         * 
+         * String test = "select ?x ?p ?o \n" + "where { \n" + "?x ?p ?o \n" +
+         * "}"; ResultSet testResults = null; while (testResults == null) {
+         * LOGGER.info("Using " + "http://" + virtuosoContName + ":8890/sparql"
+         * + " to run test select query");
+         * 
+         * // Create a QueryExecution object from a query string ... // and run
+         * it. QueryExecution qe = null; try { qe =
+         * queryExecFactory1.createQueryExecution(test); testResults =
+         * qe.execSelect(); } catch (Exception e) { } finally { qe.close(); } }
+         */
 
     }
 
     @Override
     public void receiveCommand(byte command, byte[] data) {
         if (VirtuosoSystemAdapterConstants.BULK_LOAD_DATA_GEN_FINISHED == command) {
+            LOGGER.info("Bulk phase begins");
+
             // create execution factory
-            queryExecFactory = new QueryExecutionFactoryHttp("http://" + virtuosoContName + ":8890/sparql", graphUris);
+            queryExecFactory = new QueryExecutionFactoryHttp("http://" + virtuosoContName + ":8890/sparql");
             queryExecFactory = new QueryExecutionFactoryPaginated(queryExecFactory, 100);
 
             // create update factory
             HttpAuthenticator auth = new SimpleAuthenticator("dba", "dba".toCharArray());
-            updateExecFactory = new UpdateExecutionFactoryHttp("http://" + virtuosoContName + ":8890/sparql",
-                    DatasetDescription.create(graphUris, graphUris), auth);
-            
+            updateExecFactory = new UpdateExecutionFactoryHttp("http://" + virtuosoContName + ":8890/sparql", auth);
+
+            // LOGGER.info("Received graph URIs:"+graphUris.size());
+            for (String uri : this.graphUris) {
+                // LOGGER.info(uri);
+                String create = "CREATE GRAPH " + "<"+uri+">";
+                UpdateRequest updateRequest = UpdateRequestUtils.parse(create);
+                updateExecFactory.createUpdateProcessor(updateRequest).execute();
+
+            }
             phase2 = false;
             try {
                 sendToCmdQueue(VirtuosoSystemAdapterConstants.BULK_LOADING_DATA_FINISHED);
             } catch (IOException e) {
                 e.printStackTrace();
-            }
-            LOGGER.info("Received graph URIs:"+graphUris.size());
-            for (String uri : this.graphUris) {
-                LOGGER.info(uri);
-                String create = "CREATE GRAPH "+uri;
-                UpdateRequest updateRequest = UpdateRequestUtils.parse(create);
-                updateExecFactory.createUpdateProcessor(updateRequest).execute();
-
             }
             LOGGER.info("Bulk phase is over.");
         }
@@ -146,10 +150,10 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
             ByteBuffer buffer = ByteBuffer.wrap(arg0);
             // read the graph uri, do nothing
             String graphUri = RabbitMQUtils.readString(buffer);
-            LOGGER.info("Printing graph URIs:"+graphUris.size());
-            for (String uri : this.graphUris) {
-                LOGGER.info("I have: "+uri);
-            }
+            /*
+             * LOGGER.info("Printing graph URIs:"+graphUris.size()); for (String
+             * uri : this.graphUris) { LOGGER.info("I have: "+uri); }
+             */
             if (!graphUris.contains(graphUri)) {
                 LOGGER.error(graphUri + " is not included in the default/named graphs of Virtuoso");
                 throw new RuntimeException();
@@ -212,7 +216,7 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
         if (this.selectsProcessed != this.selectsReceived) {
             LOGGER.error("SELECT queries received and processed are not equal");
         }
-        
+
         try {
             queryExecFactory.close();
         } catch (Exception e) {
@@ -225,7 +229,6 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
         super.close();
         LOGGER.info("Virtuoso has stopped.");
 
-        
     }
 
 }
