@@ -8,10 +8,13 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
+import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactoryHttp;
 import org.aksw.jena_sparql_api.core.utils.UpdateRequestUtils;
 import org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp;
 import org.aksw.jena_sparql_api.pagination.core.QueryExecutionFactoryPaginated;
+import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.http.conn.HttpHostConnectException;
 import org.apache.jena.atlas.web.auth.HttpAuthenticator;
@@ -88,33 +91,36 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
         // received
 
         //////////////////////////////////////////////////////////////////
-        org.aksw.jena_sparql_api.core.QueryExecutionFactory queryExecFactoryTest = new QueryExecutionFactoryHttp(
+        /*org.aksw.jena_sparql_api.core.QueryExecutionFactory queryExecFactoryTest = new QueryExecutionFactoryHttp(
                 "http://" + virtuosoContName + ":8890/sparql");
-        queryExecFactoryTest = new QueryExecutionFactoryPaginated(queryExecFactory, 100);
+        queryExecFactoryTest = new QueryExecutionFactoryPaginated(queryExecFactory, 100);*/
+
+        QueryExecutionFactory qef = FluentQueryExecutionFactory
+                .http("http://" + virtuosoContName + ":8890/sparql").config().withPagination(50000)
+                .end().create();
 
 
-        String test = "select ?x ?p ?o \n" + "where { \n" + "?x ?p ?o \n" + "}";
+        //String test = "select ?x ?p ?o \n" + "where { \n" + "?x ?p ?o \n" + "}";
         ResultSet testResults = null;
         while (testResults == null) {
             LOGGER.info("Using " + "http://" + virtuosoContName + ":8890/sparql" + " to run test select query");
 
             // Create a QueryExecution object from a query string ... // and
             // runit
-            QueryExecution qe = null;
+            //QueryExecution qe = queryExecFactoryTest.createQueryExecution(test);
+            QueryExecution qe = qef.createQueryExecution("select ?x ?p ?o \n" + "where { \n" + "?x ?p ?o \n" + "}");
             try {
-                TimeUnit.SECONDS.sleep(2);
-                qe = queryExecFactoryTest.createQueryExecution(test);
+                //TimeUnit.SECONDS.sleep(2);
                 testResults = qe.execSelect();
             } catch (Exception e) {
             } finally {
                 qe.close();
             }
         }
-        try {
+        /*try {
             queryExecFactoryTest.close();
         } catch (Exception e) {
-        }
-        
+        }*/
 
     }
 
