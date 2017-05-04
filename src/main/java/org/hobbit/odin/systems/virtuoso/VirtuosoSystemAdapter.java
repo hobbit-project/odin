@@ -102,6 +102,7 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
             // runit
             QueryExecution qe = null;
             try {
+                TimeUnit.SECONDS.sleep(2);
                 qe = queryExecFactoryTest.createQueryExecution(test);
                 testResults = qe.execSelect();
             } catch (Exception e) {
