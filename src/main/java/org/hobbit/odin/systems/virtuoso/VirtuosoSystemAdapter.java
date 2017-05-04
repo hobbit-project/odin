@@ -89,7 +89,7 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
 
         //////////////////////////////////////////////////////////////////
         org.aksw.jena_sparql_api.core.QueryExecutionFactory queryExecFactoryTest = new QueryExecutionFactoryHttp(
-                "http://" + virtuosoContName + ":8890/sparql", "http://www.virtuoso-graph.com/");
+                "http://" + virtuosoContName + ":8890/sparql");
         queryExecFactoryTest = new QueryExecutionFactoryPaginated(queryExecFactory, 100);
 
 
