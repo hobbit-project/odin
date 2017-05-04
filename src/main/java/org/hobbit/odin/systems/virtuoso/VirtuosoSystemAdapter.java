@@ -76,47 +76,45 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
                 "DEFAULT_GRAPH=http://www.virtuoso-graph.com/" };
         virtuosoContName = this.createContainer("tenforce/virtuoso:latest", envVariablesVirtuoso);
 
-        try {
+        /*try {
             TimeUnit.MINUTES.sleep(2);
         } catch (InterruptedException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
-        }
+        }*/
 
         // Create query execution factory for the test select query
         // will be overriden after BULK_LOADING_DATA_FINISHED signal is
         // received
 
-        /*
-         * org.aksw.jena_sparql_api.core.QueryExecutionFactory
-         * queryExecFactoryTest = new QueryExecutionFactoryHttp( "http://" +
-         * virtuosoContName + ":8890/sparql", "http://www.virtuoso-graph.com/");
-         * queryExecFactoryTest = new
-         * QueryExecutionFactoryPaginated(queryExecFactory, 100);
-         * 
-         * HttpAuthenticator auth = new SimpleAuthenticator("dba",
-         * "dba".toCharArray());
-         * org.aksw.jena_sparql_api.core.UpdateExecutionFactory
-         * updateExecFactoryTest = new UpdateExecutionFactoryHttp( "http://" +
-         * virtuosoContName + ":8890/sparql", auth);
-         * 
-         * String createTest = "CREATE GRAPH " + "<" +
-         * "http://www.virtuoso-graph.com/" + ">"; UpdateRequest updateRequest =
-         * UpdateRequestUtils.parse(createTest);
-         * updateExecFactoryTest.createUpdateProcessor(updateRequest).execute();
-         * 
-         * String test = "select ?x ?p ?o \n" + "where { \n" + "?x ?p ?o \n" +
-         * "}"; ResultSet testResults = null; while (testResults == null) {
-         * LOGGER.info("Using " + "http://" + virtuosoContName + ":8890/sparql"
-         * + " to run test select query");
-         * 
-         * // Create a QueryExecution object from a query string ... // and run
-         * it QueryExecution qe = null; try { qe =
-         * queryExecFactoryTest.createQueryExecution(test); testResults =
-         * qe.execSelect(); } catch (Exception e) { } finally { qe.close(); } }
-         * try { queryExecFactoryTest.close(); } catch (Exception e) { } try {
-         * updateExecFactoryTest.close(); } catch (Exception e) { }
-         */
+        //////////////////////////////////////////////////////////////////
+        org.aksw.jena_sparql_api.core.QueryExecutionFactory queryExecFactoryTest = new QueryExecutionFactoryHttp(
+                "http://" + virtuosoContName + ":8890/sparql", "http://www.virtuoso-graph.com/");
+        queryExecFactoryTest = new QueryExecutionFactoryPaginated(queryExecFactory, 100);
+
+
+        String test = "select ?x ?p ?o \n" + "where { \n" + "?x ?p ?o \n" + "}";
+        ResultSet testResults = null;
+        while (testResults == null) {
+            LOGGER.info("Using " + "http://" + virtuosoContName + ":8890/sparql" + " to run test select query");
+
+            // Create a QueryExecution object from a query string ... // and
+            // runit
+            QueryExecution qe = null;
+            try {
+                qe = queryExecFactoryTest.createQueryExecution(test);
+                testResults = qe.execSelect();
+            } catch (Exception e) {
+            } finally {
+                qe.close();
+            }
+        }
+        try {
+            queryExecFactoryTest.close();
+        } catch (Exception e) {
+        }
+        
+
     }
 
     @Override

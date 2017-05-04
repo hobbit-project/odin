@@ -108,7 +108,6 @@ public class OdinEvaluationModule extends AbstractEvaluationModule {
     /* Property for task triples-per-seconds Cube Dataset */
     private Property EVALUATION_TASKS_EVALUATION_TPS = null;
 
-
     /* Setters and Getters */
     public TreeMap<Long, ArrayList<TaskEvaluation>> getTasks() {
         return tasks;
@@ -532,8 +531,9 @@ public class OdinEvaluationModule extends AbstractEvaluationModule {
         double precision = (double) truePositives / (double) (truePositives + falsePositives);
         double tps = (double) modelSize / (double) (streamEndPoint - streamBeginPoint);
         // double rec, double pr, double tps, long bP, long eP
-        TaskEvaluation newEvaluation = new TaskEvaluation(recall, precision, tps, delay, receivedAnswers.size(), expectedAnswers.size());
-        
+        TaskEvaluation newEvaluation = new TaskEvaluation(recall, precision, tps, delay, receivedAnswers.size(),
+                expectedAnswers.size());
+
         if (!getTasks().containsKey(taskSentTimestamp)) {
             getTasks().put(taskSentTimestamp, new ArrayList<TaskEvaluation>());
         }
@@ -542,8 +542,11 @@ public class OdinEvaluationModule extends AbstractEvaluationModule {
         this.setSumStreamModel(this.getSumStreamModel() + modelSize);
         this.setSumStreamInterval(this.getSumStreamInterval() + (streamEndPoint - streamBeginPoint));
 
-        this.setSumPrecision(this.getSumPrecision() + precision);
-        this.setSumRecall(this.getSumRecall() + recall);
+        if (Double.isNaN(precision) == false)
+            this.setSumPrecision(this.getSumPrecision() + precision);
+        if (Double.isNaN(recall) == false)
+            this.setSumRecall(this.getSumRecall() + recall);
+
         this.setTotalFalseNegatives(this.getTotalFalseNegatives() + falseNegatives);
         this.setTotalFalsePositives(this.getTotalFalsePositives() + falsePositives);
         this.setTotalTruePositives(this.getTotalTruePositives() + truePositives);
@@ -641,16 +644,16 @@ public class OdinEvaluationModule extends AbstractEvaluationModule {
         for (DataSetStructure kpi : KPIs) {
 
             // e.g.
-            // http://w3id.org/hobbit/experiments#Delay_Dataset_for_1231433223
+            // http://w3id.org/bench#Recall_Dataset_for_1493757615796
             String l = kpi.getDatasetResource(experimentUri);
 
-            // overallEvaluation1Recall
+            // bench:Recall_Dataset_for_1493757615796
             Resource taskEvaluationResource = this.finalModel.createResource(l);
 
             experiment.addProperty(this.finalModel.createProperty(kpi.getKpiProperty()), taskEvaluationResource);
 
             // -- Data Set --
-            // overallEvaluation1Recall a qb:DataSet;
+            // bench:Recall_Dataset_for_1493757615796 a qb:DataSet;
             taskEvaluationResource.addProperty(RDF.type, this.finalModel.createResource((DataSetStructure.dataset)));
 
             // rdfs:label "Recall Evaluation of SELECT SPARQL queries"@en;
@@ -661,7 +664,7 @@ public class OdinEvaluationModule extends AbstractEvaluationModule {
             taskEvaluationResource.addProperty(
                     this.finalModel.createProperty(CubeDatasetProperties.DESCRIPTION.getPropertyURI()),
                     this.finalModel.createLiteral(kpi.getDescription(), "en"));
-            // dct:publisher exp:organization ; dct:issued
+            // dct:publisher bench:organization ; dct:issued
             taskEvaluationResource.addProperty(
                     this.finalModel.createProperty(CubeDatasetProperties.PUBLISHER.getPropertyURI()),
                     this.finalModel.createLiteral(DataSetStructure.publisher, "en"));
@@ -676,13 +679,13 @@ public class OdinEvaluationModule extends AbstractEvaluationModule {
                     this.finalModel.createProperty(CubeDatasetProperties.SUBJECT.getPropertyURI()),
                     this.finalModel.createResource(DataSetStructure.subject));
 
-            // qb:structure exp:evaluationStructureRecall
+            // qb:structure bench:RecallStructure_for_1493757615796
             Resource kpiStructure = this.finalModel
                     .createResource(kpi.getStructure() + "_for_" + experimentUri.split("#")[1]);
             taskEvaluationResource.addProperty(
                     this.finalModel.createProperty(CubeDatasetProperties.STRUCTURE.getPropertyURI()), kpiStructure);
 
-            // sdmx-attribute:unitMeasure bench:Performance
+            // sdmx-attribute:unitMeasure :recall
             taskEvaluationResource.addProperty(
                     this.finalModel.createProperty(CubeDatasetProperties.UNIT_MEASURE.getPropertyURI()),
                     this.finalModel.createResource(kpi.getUnitMeasure()));
@@ -693,10 +696,10 @@ public class OdinEvaluationModule extends AbstractEvaluationModule {
             Property componentProperty = this.finalModel
                     .createProperty(CubeDatasetProperties.COMPONENT.getPropertyURI());
 
-            // qb:component [ qb:dimension exp:taskID];
+            // qb:component [ qb:dimension bench:taskID];
             Resource taskID = this.finalModel.createResource(DataSetStructure.dimension);
             // e.g.
-            // http://w3id.org/hobbit/experiments#Delay_Dataset_for_1231433223_taskIDComponent
+            // http://w3id.org/bench#Delay_Dataset_for_1231433223_taskIDComponent
             Resource taskIDAnon = this.finalModel.createResource(l + "DimensionComponent");
             taskIDAnon.addProperty(this.finalModel.createProperty(CubeDatasetProperties.DIMENSION.getPropertyURI()),
                     taskID);
@@ -705,7 +708,7 @@ public class OdinEvaluationModule extends AbstractEvaluationModule {
             // qb:component [ qb:measure bench:recall];
             Resource measure = this.finalModel.createResource(kpi.getMeasure());
             // e.g.
-            // http://w3id.org/hobbit/experiments#Delay_Dataset_for_1231433223_MeasureComponent
+            // http://w3id.org/bench#Delay_Dataset_for_1231433223_MeasureComponent
             Resource measureAnon = this.finalModel.createResource(l + "MeasureComponent");
             measureAnon.addProperty(this.finalModel.createProperty(CubeDatasetProperties.MEASURE.getPropertyURI()),
                     measure);
@@ -718,7 +721,7 @@ public class OdinEvaluationModule extends AbstractEvaluationModule {
              * 
              */
             // e.g.
-            // http://w3id.org/hobbit/experiments#Delay_Dataset_for_1231433223_AttributeComponent
+            // http://w3id.org/bench#Delay_Dataset_for_1231433223AttributeComponent
             Resource attributeAnon = this.finalModel.createResource(l + "AttributeComponent");
             attributeAnon.addProperty(this.finalModel.createProperty(CubeDatasetProperties.ATTRIBUTE.getPropertyURI()),
                     this.finalModel.createProperty(DataSetStructure.unitMeasureObject));
@@ -753,7 +756,7 @@ public class OdinEvaluationModule extends AbstractEvaluationModule {
         int counter = 1;
 
         for (Entry<Long, ArrayList<TaskEvaluation>> cell : getTasks().entrySet()) {
-           
+
             for (TaskEvaluation task : cell.getValue()) {
                 // for each task, get all kpis
                 DataSetStructure[] KPIs = DataSetStructure.class.getEnumConstants();
@@ -762,21 +765,22 @@ public class OdinEvaluationModule extends AbstractEvaluationModule {
                     // get the KPI label
                     String kpiLabel = kpi.getLabel();
                     // and retrieve the corresponding qb:DataSet
+                    // bench:Recall_Dataset_for_1493757615796
                     Resource eval = evalResources.get(kpiLabel);
 
                     Property measure = this.finalModel.createProperty(kpi.getMeasure());
                     Property dimension = this.finalModel.createProperty(DataSetStructure.dimension);
 
                     // create observation resource
-                    Resource obs = this.finalModel.createResource("http://w3id.org/hobbit/experiments#" + kpiLabel
+                    Resource obs = this.finalModel.createResource("http://w3id.org/bench#" + kpiLabel
                             + "_Observation" + counter + "_for_" + experimentUri.split("#")[1]);
-                    // exp:recall1 a qb:Observation;
+                    // bench:recall1 a qb:Observation;
                     obs.addProperty(RDF.type, this.finalModel.createResource(DataSetStructure.observation));
 
-                    // qb:dataSet exp:overallEvaluation1Recall ;
+                    // qb:dataSet bench:overallEvaluation1Recall ;
                     obs.addProperty(this.finalModel.createProperty(DataSetStructure.dataset), eval);
 
-                    // exp:taskID
+                    // bench:taskID
                     // "1"^^http://www.w3.org/2001/XMLSchema#unsignedInt ;
                     obs.addProperty(dimension, String.valueOf(counter), XSDDatatype.XSDinteger);
 
@@ -784,13 +788,7 @@ public class OdinEvaluationModule extends AbstractEvaluationModule {
                     // "0.88"^^http://www.w3.org/2001/XMLSchema#double .
                     obs.addProperty(measure, String.valueOf(task.getKPIs().get(kpiLabel)), XSDDatatype.XSDdouble);
 
-                    //////extra little thing
-                    Property ts = this.finalModel.createProperty("http://w3id.org/hobbit/experiments#sizeOfReceived");
-                    obs.addProperty(ts, String.valueOf(task.getReceivedSize()), XSDDatatype.XSDinteger);
-                    
-                    Property ts2 = this.finalModel.createProperty("http://w3id.org/hobbit/experiments#sizeOfExpected");
-                    obs.addProperty(ts2, String.valueOf(task.getExpectedSize()), XSDDatatype.XSDinteger);
-                    
+
                     if (kpiLabel.equalsIgnoreCase("recall")) {
                         double recall = task.getKPIs().get(kpiLabel);
                         if (recall == 1.0d) {

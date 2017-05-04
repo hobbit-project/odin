@@ -430,10 +430,10 @@ public class OdinDataGenerator extends AbstractDataGenerator {
                 InputStreamReader isr = new InputStreamReader(p.getInputStream());
                 BufferedReader br = new BufferedReader(isr);
 
-                /*String lineRead;
+                String lineRead;
                 while ((lineRead = br.readLine()) != null) {
                     System.out.println(lineRead);
-                }*/
+                }
 
                 p.waitFor();
                 int v = p.exitValue();

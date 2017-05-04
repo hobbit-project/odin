@@ -32,7 +32,7 @@ public enum DataSetStructure {
     public static final String date = LocalDateTime.now()
             .format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss"));
     public static final String datasetStrucute = "http://purl.org/linked-data/cube#DataStructureDefinition";
-    public static final String dimension = "http://w3id.org/hobbit/experiments#taskID";
+    public static final String dimension = "http://w3id.org/bench#taskID";
     public static final String unitMeasureObject = "http://purl.org/linked-data/sdmx/2009/attribute#unitMeasure";
     public static final String dataset = "http://purl.org/linked-data/cube#DataSet";
     public static final String observation = "http://purl.org/linked-data/cube#Observation";
@@ -42,35 +42,35 @@ public enum DataSetStructure {
         RECALL.kpiProperty = "http://w3id.org/bench#tasksRecall";
         RECALL.label = "Recall";
         RECALL.description = "Detailed evaluation of Recall performance for each SELECT SPARQL query";
-        RECALL.structure = "http://w3id.org/hobbit/experiments#RecallStructure";
+        RECALL.structure = "http://w3id.org/bench#RecallStructure";
         RECALL.unitMeasure = "http://dbpedia.org/resource/Recall";
         RECALL.measure = "http://w3id.org/bench#recall";
 
         PRECISION.kpiProperty = "http://w3id.org/bench#tasksPrecision";
         PRECISION.label = "Precision";
         PRECISION.description = "Detailed evaluation of Precision performance for each SELECT SPARQL query";
-        PRECISION.structure = "http://w3id.org/hobbit/experiments#PrecisionStructure";
+        PRECISION.structure = "http://w3id.org/bench#PrecisionStructure";
         PRECISION.unitMeasure = "http://dbpedia.org/resource/Precision";
         PRECISION.measure = "http://w3id.org/bench#precision";
 
         FMEASURE.kpiProperty = "http://w3id.org/bench#tasksFmeasure";
         FMEASURE.label = "Fmeasure";
         FMEASURE.description = "Detailed evaluation of Fmeasure performance for each SELECT SPARQL query";
-        FMEASURE.structure = "http://w3id.org/hobbit/experiments#FmeasureStructure";
+        FMEASURE.structure = "http://w3id.org/bench#FmeasureStructure";
         FMEASURE.unitMeasure = "http://dbpedia.org/resource/F1_score";
         FMEASURE.measure = "http://w3id.org/bench#fmeasure";
 
         TPS.kpiProperty = "http://w3id.org/bench#tasksTPS";
         TPS.label = "TPS";
         TPS.description = "Detailed evaluation of TPS for each SELECT SPARQL query";
-        TPS.structure = "http://w3id.org/hobbit/experiments#TPSStructure";
+        TPS.structure = "http://w3id.org/bench#TPSStructure";
         TPS.unitMeasure = "http://dbpedia.org/resource/Query_throughput";
         TPS.measure = "http://w3id.org/bench#tps";
 
         DELAY.kpiProperty = "http://w3id.org/bench#tasksAnswerDelay";
         DELAY.label = "Delay";
         DELAY.description = "Detailed evaluation of Task Delay for each SELECT SPARQL query";
-        DELAY.structure = "http://w3id.org/hobbit/experiments#AnswerDelayStructure";
+        DELAY.structure = "http://w3id.org/bench#AnswerDelayStructure";
         DELAY.unitMeasure = "http://dbpedia.org/resource/Second";
         DELAY.measure = "http://w3id.org/bench#Second";
 
@@ -109,7 +109,7 @@ public enum DataSetStructure {
      * @return a String representation of the Resource URI
      */
     public String getDatasetResource(String key) {
-        String resourceURI = "http://w3id.org/hobbit/experiments#" + this.label + "_Dataset_for_" + key.split("#")[1];
+        String resourceURI = "http://w3id.org/bench#" + this.label + "_Dataset_for_" + key.split("#")[1];
         return resourceURI;
     }
 

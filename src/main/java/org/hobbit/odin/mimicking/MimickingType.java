@@ -28,7 +28,7 @@ public enum MimickingType {
         TWIG.outputType = "rdf";
 
         TRANSPORT_DATA.mimickingName = "TRANSPORT_DATA";
-        TRANSPORT_DATA.executeCommand = "podigg/podigg-lc-hobbit:release-1.0.2";
+        TRANSPORT_DATA.executeCommand = "podigg/podigg-lc-hobbit";
         TRANSPORT_DATA.outputType = "rdf";
     }
 
