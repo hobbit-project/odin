@@ -16,6 +16,7 @@ import org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp;
 import org.aksw.jena_sparql_api.pagination.core.QueryExecutionFactoryPaginated;
 import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
 import org.apache.commons.io.output.ByteArrayOutputStream;
+import org.apache.http.HttpException;
 import org.apache.http.conn.HttpHostConnectException;
 import org.apache.jena.atlas.web.auth.HttpAuthenticator;
 import org.apache.jena.atlas.web.auth.SimpleAuthenticator;
@@ -79,36 +80,20 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
                 "DEFAULT_GRAPH=http://www.virtuoso-graph.com/" };
         virtuosoContName = this.createContainer("tenforce/virtuoso:latest", envVariablesVirtuoso);
 
-        /*try {
-            TimeUnit.MINUTES.sleep(2);
-        } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }*/
-
-        // Create query execution factory for the test select query
-        // will be overriden after BULK_LOADING_DATA_FINISHED signal is
-        // received
-
-        //////////////////////////////////////////////////////////////////
-        /*org.aksw.jena_sparql_api.core.QueryExecutionFactory queryExecFactoryTest = new QueryExecutionFactoryHttp(
-                "http://" + virtuosoContName + ":8890/sparql");
-        queryExecFactoryTest = new QueryExecutionFactoryPaginated(queryExecFactory, 100);*/
-
+        
+        
         QueryExecutionFactory qef = FluentQueryExecutionFactory
                 .http("http://" + virtuosoContName + ":8890/sparql").config().withPagination(50000)
                 .end().create();
 
 
-        //String test = "select ?x ?p ?o \n" + "where { \n" + "?x ?p ?o \n" + "}";
         ResultSet testResults = null;
         while (testResults == null) {
             LOGGER.info("Using " + "http://" + virtuosoContName + ":8890/sparql" + " to run test select query");
 
             // Create a QueryExecution object from a query string ... // and
             // runit
-            //QueryExecution qe = queryExecFactoryTest.createQueryExecution(test);
-            QueryExecution qe = qef.createQueryExecution("select ?x ?p ?o \n" + "where { \n" + "?x ?p ?o \n" + "}");
+            QueryExecution qe = qef.createQueryExecution("SELECT * { ?s a <http://ex.org/foo/bar> } LIMIT 1");
             try {
                 //TimeUnit.SECONDS.sleep(2);
                 testResults = qe.execSelect();
@@ -117,10 +102,6 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
                 qe.close();
             }
         }
-        /*try {
-            queryExecFactoryTest.close();
-        } catch (Exception e) {
-        }*/
 
     }
 
