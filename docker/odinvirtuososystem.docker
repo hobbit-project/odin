@@ -4,6 +4,6 @@ ADD target/odin-1.0.0-SNAPSHOT.jar /odin/odin.jar
 
 WORKDIR /odin
 
-CMD java -cp odin.jar org.hobbit.core.run.ComponentStarter org.hobbit.odin.systems.virtuoso.VirtuosoSystemAdapter
+CMD java -cp odin.jar org.hobbit.odin.ComponentStarter org.hobbit.odin.systems.virtuoso.VirtuosoSystemAdapter
 
 
