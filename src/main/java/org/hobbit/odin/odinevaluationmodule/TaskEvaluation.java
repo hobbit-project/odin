@@ -27,7 +27,10 @@ public class TaskEvaluation {
         kpis.put("Recall", rec);
         kpis.put("Precision", pr);
         kpis.put("TPS", tps);
-        kpis.put("Fmeasure", (double) (2.0 * rec * pr) / (double) (rec + pr));
+        if(rec == 0.0d && pr == 0.0d)
+            kpis.put("Fmeasure", 0.0d);
+        else
+            kpis.put("Fmeasure", (double) (2.0 * rec * pr) / (double) (rec + pr));
         kpis.put("Delay", answerDelay);
         this.receivedSize = receivedSize;
         this.expectedSize = expectedSize;

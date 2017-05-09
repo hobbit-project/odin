@@ -530,14 +530,14 @@ public class OdinEvaluationModule extends AbstractEvaluationModule {
         double recall = (double) truePositives / (double) (truePositives + falseNegatives);
         double precision = (double) truePositives / (double) (truePositives + falsePositives);
         double tps = (double) modelSize / (double) (streamEndPoint - streamBeginPoint);
-        if (Double.isNaN(precision) == false) {
-            this.setSumPrecision(this.getSumPrecision() + precision);
-            precision = -1.0d;
-        }
-        if (Double.isNaN(recall) == false) {
-            this.setSumRecall(this.getSumRecall() + recall);
-            recall = -1.0d;
-        }
+        
+        if (Double.isNaN(precision) == true)
+            precision = 0.0d;
+        this.setSumPrecision(this.getSumPrecision() + precision);
+
+        if (Double.isNaN(recall) == true)
+            recall = 0.0d;
+        this.setSumRecall(this.getSumRecall() + recall);
 
         this.setSumStreamModel(this.getSumStreamModel() + modelSize);
         this.setSumStreamInterval(this.getSumStreamInterval() + (streamEndPoint - streamBeginPoint));
