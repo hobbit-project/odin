@@ -530,7 +530,21 @@ public class OdinEvaluationModule extends AbstractEvaluationModule {
         double recall = (double) truePositives / (double) (truePositives + falseNegatives);
         double precision = (double) truePositives / (double) (truePositives + falsePositives);
         double tps = (double) modelSize / (double) (streamEndPoint - streamBeginPoint);
-        // double rec, double pr, double tps, long bP, long eP
+        if (Double.isNaN(precision) == false) {
+            this.setSumPrecision(this.getSumPrecision() + precision);
+            precision = -1.0d;
+        }
+        if (Double.isNaN(recall) == false) {
+            this.setSumRecall(this.getSumRecall() + recall);
+            recall = -1.0d;
+        }
+
+        this.setSumStreamModel(this.getSumStreamModel() + modelSize);
+        this.setSumStreamInterval(this.getSumStreamInterval() + (streamEndPoint - streamBeginPoint));
+        this.setTotalFalseNegatives(this.getTotalFalseNegatives() + falseNegatives);
+        this.setTotalFalsePositives(this.getTotalFalsePositives() + falsePositives);
+        this.setTotalTruePositives(this.getTotalTruePositives() + truePositives);
+
         TaskEvaluation newEvaluation = new TaskEvaluation(recall, precision, tps, delay, receivedAnswers.size(),
                 expectedAnswers.size());
 
@@ -539,17 +553,6 @@ public class OdinEvaluationModule extends AbstractEvaluationModule {
         }
         getTasks().get(taskSentTimestamp).add(newEvaluation);
 
-        this.setSumStreamModel(this.getSumStreamModel() + modelSize);
-        this.setSumStreamInterval(this.getSumStreamInterval() + (streamEndPoint - streamBeginPoint));
-
-        if (Double.isNaN(precision) == false)
-            this.setSumPrecision(this.getSumPrecision() + precision);
-        if (Double.isNaN(recall) == false)
-            this.setSumRecall(this.getSumRecall() + recall);
-
-        this.setTotalFalseNegatives(this.getTotalFalseNegatives() + falseNegatives);
-        this.setTotalFalsePositives(this.getTotalFalsePositives() + falsePositives);
-        this.setTotalTruePositives(this.getTotalTruePositives() + truePositives);
         LOGGER.info("Evaluation of task is over.");
 
     }
@@ -772,8 +775,8 @@ public class OdinEvaluationModule extends AbstractEvaluationModule {
                     Property dimension = this.finalModel.createProperty(DataSetStructure.dimension);
 
                     // create observation resource
-                    Resource obs = this.finalModel.createResource("http://w3id.org/bench#" + kpiLabel
-                            + "_Observation" + counter + "_for_" + experimentUri.split("#")[1]);
+                    Resource obs = this.finalModel.createResource("http://w3id.org/bench#" + kpiLabel + "_Observation"
+                            + counter + "_for_" + experimentUri.split("#")[1]);
                     // bench:recall1 a qb:Observation;
                     obs.addProperty(RDF.type, this.finalModel.createResource(DataSetStructure.observation));
 
@@ -787,7 +790,6 @@ public class OdinEvaluationModule extends AbstractEvaluationModule {
                     // bench:recall
                     // "0.88"^^http://www.w3.org/2001/XMLSchema#double .
                     obs.addProperty(measure, String.valueOf(task.getKPIs().get(kpiLabel)), XSDDatatype.XSDdouble);
-
 
                     if (kpiLabel.equalsIgnoreCase("recall")) {
                         double recall = task.getKPIs().get(kpiLabel);

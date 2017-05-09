@@ -102,7 +102,7 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
                 qe.close();
             }
         }
-
+        
     }
 
     @Override
