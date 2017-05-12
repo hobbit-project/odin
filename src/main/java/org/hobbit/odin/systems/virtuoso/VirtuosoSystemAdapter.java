@@ -102,6 +102,7 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
                 qe.close();
             }
         }
+        qef.close();
         
     }
 
