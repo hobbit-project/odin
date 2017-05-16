@@ -150,9 +150,9 @@ public enum DataSetStructure {
      */
     public Model defineModelMeasure(Resource m) {
         Model model = ModelFactory.createDefaultModel();
-
+        Resource measProp = model.createProperty(CubeDatasetProperties.MEASURE_PROPERTY.getPropertyURI());
         // bench:recall a qb:MeasureProperty;
-        model.add(m, RDF.type, CubeDatasetProperties.MEASURE_PROPERTY.getPropertyURI());
+        model.add(m, RDF.type, measProp);
 
         // rdfs:label "Recall"@en;
         model.add(m, RDFS.label, model.createLiteral(new String(this.label), "en"));

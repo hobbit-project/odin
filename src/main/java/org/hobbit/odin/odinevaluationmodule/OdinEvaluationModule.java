@@ -539,11 +539,11 @@ public class OdinEvaluationModule extends AbstractEvaluationModule {
             recall = 0.0d;
         this.setSumRecall(this.getSumRecall() + recall);
 
-        this.setSumStreamModel(this.getSumStreamModel() + modelSize);
-        this.setSumStreamInterval(this.getSumStreamInterval() + (streamEndPoint - streamBeginPoint));
-        this.setTotalFalseNegatives(this.getTotalFalseNegatives() + falseNegatives);
-        this.setTotalFalsePositives(this.getTotalFalsePositives() + falsePositives);
-        this.setTotalTruePositives(this.getTotalTruePositives() + truePositives);
+        setSumStreamModel(getSumStreamModel() + modelSize);
+        setSumStreamInterval(getSumStreamInterval() + (streamEndPoint - streamBeginPoint));
+        setTotalFalseNegatives(getTotalFalseNegatives() + falseNegatives);
+        setTotalFalsePositives(getTotalFalsePositives() + falsePositives);
+        setTotalTruePositives(getTotalTruePositives() + truePositives);
 
         TaskEvaluation newEvaluation = new TaskEvaluation(recall, precision, tps, delay, receivedAnswers.size(),
                 expectedAnswers.size());
@@ -590,42 +590,42 @@ public class OdinEvaluationModule extends AbstractEvaluationModule {
         // this.finalModel.createTypedLiteral(this.maxTPS,
         // XSDDatatype.XSDdouble);
 
-        Literal averageTaskDelayLiteral = this.finalModel.createTypedLiteral(averageTaskDelay, XSDDatatype.XSDdouble);
-        this.finalModel.add(experiment, this.EVALUATION_AVERAGE_TASK_DELAY, averageTaskDelayLiteral);
+        Literal averageTaskDelayLiteral = finalModel.createTypedLiteral(averageTaskDelay, XSDDatatype.XSDdouble);
+        finalModel.add(experiment, EVALUATION_AVERAGE_TASK_DELAY, averageTaskDelayLiteral);
 
-        Literal microAverageRecallLiteral = this.finalModel.createTypedLiteral(microAverageRecall,
+        Literal microAverageRecallLiteral = finalModel.createTypedLiteral(microAverageRecall,
                 XSDDatatype.XSDdouble);
-        this.finalModel.add(experiment, this.EVALUATION_MICRO_AVERAGE_RECALL, microAverageRecallLiteral);
+        finalModel.add(experiment, EVALUATION_MICRO_AVERAGE_RECALL, microAverageRecallLiteral);
 
-        Literal microAveragePrecisionLiteral = this.finalModel.createTypedLiteral(microAveragePrecision,
+        Literal microAveragePrecisionLiteral = finalModel.createTypedLiteral(microAveragePrecision,
                 XSDDatatype.XSDdouble);
-        this.finalModel.add(experiment, this.EVALUATION_MICRO_AVERAGE_PRECISION, microAveragePrecisionLiteral);
+        finalModel.add(experiment, EVALUATION_MICRO_AVERAGE_PRECISION, microAveragePrecisionLiteral);
 
-        Literal microAverageFmeasureLiteral = this.finalModel.createTypedLiteral(microAverageFmeasure,
+        Literal microAverageFmeasureLiteral = finalModel.createTypedLiteral(microAverageFmeasure,
                 XSDDatatype.XSDdouble);
-        this.finalModel.add(experiment, this.EVALUATION_MICRO_AVERAGE_FMEASURE, microAverageFmeasureLiteral);
+        finalModel.add(experiment, EVALUATION_MICRO_AVERAGE_FMEASURE, microAverageFmeasureLiteral);
 
-        Literal macroAverageRecallLiteral = this.finalModel.createTypedLiteral(macroAverageRecall,
+        Literal macroAverageRecallLiteral = finalModel.createTypedLiteral(macroAverageRecall,
                 XSDDatatype.XSDdouble);
-        this.finalModel.add(experiment, this.EVALUATION_MACRO_AVERAGE_RECALL, macroAverageRecallLiteral);
+        finalModel.add(experiment, EVALUATION_MACRO_AVERAGE_RECALL, macroAverageRecallLiteral);
 
-        Literal macroAveragePrecisionLiteral = this.finalModel.createTypedLiteral(macroAveragePrecision,
+        Literal macroAveragePrecisionLiteral = finalModel.createTypedLiteral(macroAveragePrecision,
                 XSDDatatype.XSDdouble);
-        this.finalModel.add(experiment, this.EVALUATION_MACRO_AVERAGE_PRECISION, macroAveragePrecisionLiteral);
+        finalModel.add(experiment, EVALUATION_MACRO_AVERAGE_PRECISION, macroAveragePrecisionLiteral);
 
-        Literal macroAverageFmeasureLiteral = this.finalModel.createTypedLiteral(macroAverageFmeasure,
+        Literal macroAverageFmeasureLiteral = finalModel.createTypedLiteral(macroAverageFmeasure,
                 XSDDatatype.XSDdouble);
-        this.finalModel.add(experiment, this.EVALUATION_MACRO_AVERAGE_FMEASURE, macroAverageFmeasureLiteral);
+        finalModel.add(experiment, EVALUATION_MACRO_AVERAGE_FMEASURE, macroAverageFmeasureLiteral);
 
-        Literal averageTPSLiteral = this.finalModel.createTypedLiteral(averageTPS, XSDDatatype.XSDdouble);
-        this.finalModel.add(experiment, this.EVALUATION_AVERAGE_TPS, averageTPSLiteral);
+        Literal averageTPSLiteral = finalModel.createTypedLiteral(averageTPS, XSDDatatype.XSDdouble);
+        finalModel.add(experiment, EVALUATION_AVERAGE_TPS, averageTPSLiteral);
 
         HashMap<String, Resource> evalResources = createCubeDatasets(experiment);
         addObservations(evalResources, experiment);
 
         LOGGER.info("Summary of Evaluation is over.");
 
-        return this.finalModel;
+        return finalModel;
     }
 
     /**
@@ -651,69 +651,69 @@ public class OdinEvaluationModule extends AbstractEvaluationModule {
             String l = kpi.getDatasetResource(experimentUri);
 
             // bench:Recall_Dataset_for_1493757615796
-            Resource taskEvaluationResource = this.finalModel.createResource(l);
+            Resource taskEvaluationResource = finalModel.createResource(l);
 
-            experiment.addProperty(this.finalModel.createProperty(kpi.getKpiProperty()), taskEvaluationResource);
+            experiment.addProperty(finalModel.createProperty(kpi.getKpiProperty()), taskEvaluationResource);
 
             // -- Data Set --
             // bench:Recall_Dataset_for_1493757615796 a qb:DataSet;
-            taskEvaluationResource.addProperty(RDF.type, this.finalModel.createResource((DataSetStructure.dataset)));
+            taskEvaluationResource.addProperty(RDF.type, finalModel.createResource((DataSetStructure.dataset)));
 
             // rdfs:label "Recall Evaluation of SELECT SPARQL queries"@en;
-            taskEvaluationResource.addProperty(RDFS.label, this.finalModel.createLiteral(kpi.getLabel(), "en"));
+            taskEvaluationResource.addProperty(RDFS.label, finalModel.createLiteral(kpi.getLabel(), "en"));
             evalResources.put(kpi.getLabel(), taskEvaluationResource);
 
             // dct:description "Recall Evaluation of SELECT SPARQL queries"@en;
             taskEvaluationResource.addProperty(
-                    this.finalModel.createProperty(CubeDatasetProperties.DESCRIPTION.getPropertyURI()),
-                    this.finalModel.createLiteral(kpi.getDescription(), "en"));
+                    finalModel.createProperty(CubeDatasetProperties.DESCRIPTION.getPropertyURI()),
+                    finalModel.createLiteral(kpi.getDescription(), "en"));
             // dct:publisher bench:organization ; dct:issued
             taskEvaluationResource.addProperty(
-                    this.finalModel.createProperty(CubeDatasetProperties.PUBLISHER.getPropertyURI()),
-                    this.finalModel.createLiteral(DataSetStructure.publisher, "en"));
+                    finalModel.createProperty(CubeDatasetProperties.PUBLISHER.getPropertyURI()),
+                    finalModel.createLiteral(DataSetStructure.publisher, "en"));
 
             // "2010-08-11"^^xsd:date;
             taskEvaluationResource.addProperty(
-                    this.finalModel.createProperty(CubeDatasetProperties.DATE.getPropertyURI()),
-                    this.finalModel.createTypedLiteral(DataSetStructure.date, XSDDatatype.XSDdateTime));
+                    finalModel.createProperty(CubeDatasetProperties.DATE.getPropertyURI()),
+                    finalModel.createTypedLiteral(DataSetStructure.date, XSDDatatype.XSDdateTime));
 
             // dct:subject sdmx-subject:2.9 ;
             taskEvaluationResource.addProperty(
-                    this.finalModel.createProperty(CubeDatasetProperties.SUBJECT.getPropertyURI()),
-                    this.finalModel.createResource(DataSetStructure.subject));
+                    finalModel.createProperty(CubeDatasetProperties.SUBJECT.getPropertyURI()),
+                    finalModel.createResource(DataSetStructure.subject));
 
             // qb:structure bench:RecallStructure_for_1493757615796
             Resource kpiStructure = this.finalModel
                     .createResource(kpi.getStructure() + "_for_" + experimentUri.split("#")[1]);
             taskEvaluationResource.addProperty(
-                    this.finalModel.createProperty(CubeDatasetProperties.STRUCTURE.getPropertyURI()), kpiStructure);
+                    finalModel.createProperty(CubeDatasetProperties.STRUCTURE.getPropertyURI()), kpiStructure);
 
             // sdmx-attribute:unitMeasure :recall
             taskEvaluationResource.addProperty(
-                    this.finalModel.createProperty(CubeDatasetProperties.UNIT_MEASURE.getPropertyURI()),
-                    this.finalModel.createResource(kpi.getUnitMeasure()));
+                    finalModel.createProperty(CubeDatasetProperties.UNIT_MEASURE.getPropertyURI()),
+                    finalModel.createResource(kpi.getUnitMeasure()));
 
             /////////////////////////////////////////////////////////////////////////////////////////////
             // -- Data structure definition --
-            kpiStructure.addProperty(RDF.type, this.finalModel.createResource(DataSetStructure.datasetStrucute));
-            Property componentProperty = this.finalModel
+            kpiStructure.addProperty(RDF.type, finalModel.createResource(DataSetStructure.datasetStrucute));
+            Property componentProperty = finalModel
                     .createProperty(CubeDatasetProperties.COMPONENT.getPropertyURI());
 
             // qb:component [ qb:dimension bench:taskID];
-            Resource taskID = this.finalModel.createResource(DataSetStructure.dimension);
+            Resource taskID = finalModel.createResource(DataSetStructure.dimension);
             // e.g.
             // http://w3id.org/bench#Delay_Dataset_for_1231433223_taskIDComponent
-            Resource taskIDAnon = this.finalModel.createResource(l + "DimensionComponent");
-            taskIDAnon.addProperty(this.finalModel.createProperty(CubeDatasetProperties.DIMENSION.getPropertyURI()),
+            Resource taskIDAnon = finalModel.createResource(l + "DimensionComponent");
+            taskIDAnon.addProperty(finalModel.createProperty(CubeDatasetProperties.DIMENSION.getPropertyURI()),
                     taskID);
             kpiStructure.addProperty(componentProperty, taskIDAnon);
 
             // qb:component [ qb:measure bench:recall];
-            Resource measure = this.finalModel.createResource(kpi.getMeasure());
+            Resource measure = finalModel.createResource(kpi.getMeasure());
             // e.g.
             // http://w3id.org/bench#Delay_Dataset_for_1231433223_MeasureComponent
-            Resource measureAnon = this.finalModel.createResource(l + "MeasureComponent");
-            measureAnon.addProperty(this.finalModel.createProperty(CubeDatasetProperties.MEASURE.getPropertyURI()),
+            Resource measureAnon = finalModel.createResource(l + "MeasureComponent");
+            measureAnon.addProperty(finalModel.createProperty(CubeDatasetProperties.MEASURE.getPropertyURI()),
                     measure);
             kpiStructure.addProperty(componentProperty, measureAnon);
 
@@ -725,19 +725,22 @@ public class OdinEvaluationModule extends AbstractEvaluationModule {
              */
             // e.g.
             // http://w3id.org/bench#Delay_Dataset_for_1231433223AttributeComponent
-            Resource attributeAnon = this.finalModel.createResource(l + "AttributeComponent");
-            attributeAnon.addProperty(this.finalModel.createProperty(CubeDatasetProperties.ATTRIBUTE.getPropertyURI()),
-                    this.finalModel.createProperty(DataSetStructure.unitMeasureObject));
-            attributeAnon.addProperty(this.finalModel.createProperty(CubeDatasetProperties.REQUIRED.getPropertyURI()),
-                    this.finalModel.createTypedLiteral(new Boolean(true)));
-            attributeAnon.addProperty(this.finalModel.createProperty(CubeDatasetProperties.ATTACHMENT.getPropertyURI()),
-                    this.finalModel.createResource(DataSetStructure.dataset));
+            Resource attributeAnon = finalModel.createResource(l + "AttributeComponent");
+            
+            attributeAnon.addProperty(finalModel.createProperty(CubeDatasetProperties.ATTRIBUTE.getPropertyURI()),
+                    finalModel.createProperty(DataSetStructure.unitMeasureObject));
+            
+            attributeAnon.addProperty(finalModel.createProperty(CubeDatasetProperties.REQUIRED.getPropertyURI()),
+                    finalModel.createTypedLiteral(new Boolean(true)));
+            
+            attributeAnon.addProperty(finalModel.createProperty(CubeDatasetProperties.ATTACHMENT.getPropertyURI()),
+                    finalModel.createResource(DataSetStructure.dataset));
 
             kpiStructure.addProperty(componentProperty, attributeAnon);
 
-            this.finalModel.add(DataSetStructure.defineModelDimension(taskID));
+            finalModel.add(DataSetStructure.defineModelDimension(taskID));
 
-            this.finalModel.add(kpi.defineModelMeasure(measure));
+            finalModel.add(kpi.defineModelMeasure(measure));
 
         }
         return evalResources;
@@ -771,17 +774,17 @@ public class OdinEvaluationModule extends AbstractEvaluationModule {
                     // bench:Recall_Dataset_for_1493757615796
                     Resource eval = evalResources.get(kpiLabel);
 
-                    Property measure = this.finalModel.createProperty(kpi.getMeasure());
-                    Property dimension = this.finalModel.createProperty(DataSetStructure.dimension);
+                    Property measure = finalModel.createProperty(kpi.getMeasure());
+                    Property dimension = finalModel.createProperty(DataSetStructure.dimension);
 
                     // create observation resource
-                    Resource obs = this.finalModel.createResource("http://w3id.org/bench#" + kpiLabel + "_Observation"
+                    Resource obs = finalModel.createResource("http://w3id.org/bench#" + kpiLabel + "_Observation"
                             + counter + "_for_" + experimentUri.split("#")[1]);
                     // bench:recall1 a qb:Observation;
-                    obs.addProperty(RDF.type, this.finalModel.createResource(DataSetStructure.observation));
+                    obs.addProperty(RDF.type, finalModel.createResource(DataSetStructure.observation));
 
                     // qb:dataSet bench:overallEvaluation1Recall ;
-                    obs.addProperty(this.finalModel.createProperty(DataSetStructure.dataset), eval);
+                    obs.addProperty(finalModel.createProperty(DataSetStructure.dataset), eval);
 
                     // bench:taskID
                     // "1"^^http://www.w3.org/2001/XMLSchema#unsignedInt ;
@@ -794,15 +797,15 @@ public class OdinEvaluationModule extends AbstractEvaluationModule {
                     if (kpiLabel.equalsIgnoreCase("recall")) {
                         double recall = task.getKPIs().get(kpiLabel);
                         if (recall == 1.0d) {
-                            this.maxTPS = task.getKPIs().get("TPS");
+                            maxTPS = task.getKPIs().get("TPS");
                         }
                     }
                 }
                 counter++;
             }
         }
-        Literal maxTPSLiteral = this.finalModel.createTypedLiteral(this.maxTPS, XSDDatatype.XSDdouble);
-        this.finalModel.add(experiment, this.EVALUATION_MAX_TPS, maxTPSLiteral);
+        Literal maxTPSLiteral = finalModel.createTypedLiteral(this.maxTPS, XSDDatatype.XSDdouble);
+        finalModel.add(experiment, EVALUATION_MAX_TPS, maxTPSLiteral);
 
     }
 

@@ -72,7 +72,7 @@ public class OdinBenchmarkController extends AbstractBenchmarkController {
             if (numberOfDataGenerators < 0) {
                 LOGGER.error(
                         "Couldn't get the number of data generators from the parameter model. Using the default value.");
-                numberOfDataGenerators = 10;
+                numberOfDataGenerators = 2;
             }
         }
         /* Number of task generators */
@@ -107,7 +107,7 @@ public class OdinBenchmarkController extends AbstractBenchmarkController {
         if (seed < 0) {
             LOGGER.error(
                     "Couldn't get the seed for the mimicking algorithm seed from the parameter model. Using the default value.");
-            seed = 10;
+            seed = 100;
         }
         /* Number of triples */
         iterator = benchmarkParamModel
@@ -138,7 +138,7 @@ public class OdinBenchmarkController extends AbstractBenchmarkController {
         if (mimicking == null) {
             LOGGER.error(
                     "Couldn't get the name of the mimicking algorithm from the parameter model. Using the default value.");
-            mimicking = "MIMICKING_SIMPLE";
+            mimicking = "TRANSPORT_DATA";
         }
 
         /* Name of mimicking algorithm output folder */
@@ -171,7 +171,7 @@ public class OdinBenchmarkController extends AbstractBenchmarkController {
         if (mimickingOutput == null) {
             LOGGER.error(
                     "Couldn't get the name of the mimicking algorithm output folder from the parameter model. Using the default value.");
-            mimickingOutput = System.getProperty("user.dir") + "/main/resources/";
+            mimickingOutput = "output_data/";
         }
 
         /* Number of inserted queries until a select query is performed */
@@ -189,7 +189,7 @@ public class OdinBenchmarkController extends AbstractBenchmarkController {
             LOGGER.error(
                     "Couldn't get the number of inserted queries until a select query is performed from the parameter model. Using the default value.");
             numberOfInsertQueries = 10;
-            ;
+            
         }
 
         /* Benchmark duration */

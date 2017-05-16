@@ -705,7 +705,8 @@ public class OdinDataGenerator extends AbstractDataGenerator {
     protected void generateData() throws Exception {
 
         LOGGER.info("Start bulk loading phase for Data Genetaror " + this.getGeneratorId());
-        byte[] graph = RabbitMQUtils.writeByteArrays(new byte[][] { RabbitMQUtils.writeString(this.defaultGraph) });
+        byte[] graph = RabbitMQUtils
+                .writeByteArrays(new byte[][] { RabbitMQUtils.writeString(this.defaultGraph), new byte[0]});
         sendDataToSystemAdapter(graph);
         sendToCmdQueue(OdinConstants.BULK_LOAD_FROM_DATAGENERATOR);
         bulkLoadMutex.acquire();
