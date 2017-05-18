@@ -183,8 +183,7 @@ public class OdinDataGenerator extends AbstractDataGenerator {
             String insert = this.insertQuery.getUpdateRequestAsString();
             // serialize insert query into a byte array and send it to the
             // system adapter
-            sentToSystemAdapter(RabbitMQUtils.writeByteArrays(
-                    new byte[][] { RabbitMQUtils.writeString(defaultGraph), RabbitMQUtils.writeString(insert) }));
+            sentToSystemAdapter(RabbitMQUtils.writeByteArrays(new byte[][] { RabbitMQUtils.writeString(insert) }));
         }
 
         /**
@@ -705,8 +704,7 @@ public class OdinDataGenerator extends AbstractDataGenerator {
     protected void generateData() throws Exception {
 
         LOGGER.info("Start bulk loading phase for Data Genetaror " + this.getGeneratorId());
-        byte[] graph = RabbitMQUtils
-                .writeByteArrays(new byte[][] { RabbitMQUtils.writeString(this.defaultGraph), new byte[0]});
+        byte[] graph = RabbitMQUtils.writeByteArrays(new byte[][] { RabbitMQUtils.writeString(this.defaultGraph) });
         sendDataToSystemAdapter(graph);
         sendToCmdQueue(OdinConstants.BULK_LOAD_FROM_DATAGENERATOR);
         bulkLoadMutex.acquire();

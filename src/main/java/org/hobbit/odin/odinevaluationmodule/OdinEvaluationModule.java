@@ -573,15 +573,33 @@ public class OdinEvaluationModule extends AbstractEvaluationModule {
         // compute macro and micro averages KPIs
         double microAverageRecall = (double) this.getTotalTruePositives()
                 / (double) (this.getTotalTruePositives() + this.getTotalFalseNegatives());
+        if(Double.isNaN(microAverageRecall) == true)
+            microAverageRecall = 0.0d;
+        
         double microAveragePrecision = (double) this.getTotalTruePositives()
                 / (double) (this.getTotalTruePositives() + this.getTotalFalsePositives());
+        if(Double.isNaN(microAveragePrecision) == true)
+            microAveragePrecision = 0.0d;
+        
+        
         double microAverageFmeasure = (double) (2.0 * microAverageRecall * microAveragePrecision)
                 / (double) (microAverageRecall + microAveragePrecision);
-
+        if(Double.isNaN(microAverageFmeasure) == true)
+            microAverageFmeasure = 0.0d;
+        
         double macroAverageRecall = (double) this.getSumRecall() / (double) this.getTaskCounter();
+        if(Double.isNaN(macroAverageRecall) == true)
+            macroAverageRecall = 0.0d;
+        
         double macroAveragePrecision = (double) this.getSumPrecision() / (double) this.getTaskCounter();
+        if(Double.isNaN(macroAveragePrecision) == true)
+            macroAveragePrecision = 0.0d;
+        
         double macroAverageFmeasure = (double) (2.0 * macroAverageRecall * macroAveragePrecision)
                 / (double) (macroAverageRecall + macroAveragePrecision);
+        if(Double.isNaN(macroAverageFmeasure) == true)
+            macroAverageFmeasure = 0.0d;       
+        
         //////////////////////////////////////////////////////////////////////////////////////////////
         Resource experiment = this.finalModel.createResource(experimentUri);
         this.finalModel.add(experiment, RDF.type, HOBBIT.Experiment);

@@ -95,7 +95,7 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
             // runit
             QueryExecution qe = qef.createQueryExecution("SELECT * { ?s a <http://ex.org/foo/bar> } LIMIT 1");
             try {
-                //TimeUnit.SECONDS.sleep(2);
+                TimeUnit.SECONDS.sleep(2);
                 testResults = qe.execSelect();
             } catch (Exception e) {
             } finally {
@@ -150,16 +150,6 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
             LOGGER.info("INSERT SPARQL query received.");
             this.insertsReceived++;
             ByteBuffer buffer = ByteBuffer.wrap(arg0);
-            // read the graph uri, do nothing
-            String graphUri = RabbitMQUtils.readString(buffer);
-            /*
-             * LOGGER.info("Printing graph URIs:"+graphUris.size()); for (String
-             * uri : this.graphUris) { LOGGER.info("I have: "+uri); }
-             */
-            if (!graphUris.contains(graphUri)) {
-                LOGGER.error(graphUri + " is not included in the default/named graphs of Virtuoso");
-                throw new RuntimeException();
-            }
             // read the insert query
             String insertQuery = RabbitMQUtils.readString(buffer);
             // insert query
