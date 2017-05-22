@@ -304,7 +304,7 @@ public class OdinBenchmarkController extends AbstractBenchmarkController {
         // wait for the task generators to finish their work
         waitForTaskGenToFinish();
         // wait for the system to terminate
-        waitForSystemToFinish();
+        waitForSystemToFinish(1500000);
         // data generators environmental values
         createEvaluationModule(EVALUATION_MODULE_CONTAINER_IMAGE, this.envVariablesEvaluationModule);
         // wait for the evaluation to finish
