@@ -358,13 +358,16 @@ public class OdinEvaluationModuleTest {
         ResultValue v3 = new ResultValue(dNumber3);
         assertTrue(!v3.equals(v));
         assertTrue(!v3.equals(v2));
-        
+        //////////////////////////////////////////////////////////////////////////////////
+
         String str = "blele";
         Literal strL = newModel.createTypedLiteral(str,
                 XSDDatatype.XSDstring);
         newModel.add(experiment, newModel.createProperty("http://w3id.org/bench/value"), strL);
-        assertTrue(!strL.equals(v));
-        assertTrue(!strL.equals(v3));
+        ResultValue v4 = new ResultValue(strL);
+
+        assertTrue(!v4.equals(v));
+        assertTrue(!v4.equals(v3));
         
     }
 }
