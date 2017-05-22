@@ -5,11 +5,12 @@
   "results": {
     "bindings": [
       {
-        "x0": { "type": "uri" , "value": "http://www.myOntology.com#a" } ,
+        "x0": { "type": "literal" , "value": "bleble" } ,
         "x1": { "type": "uri" , "value": "http://www.myOntology.com#b" } ,
+	"x4": { "type": "literal" , "value": "0.110000000000001" } ,
         "x2": { "type": "uri" , "value": "http://www.myOntology.com#c" } ,
-        "x3": { "type": "uri" , "value": "http://www.myOntology.com#d" } ,
-	"x4": { "type": "uri" , "value": "http://www.myOntology.com#e" } 
+        "x3": { "type": "uri" , "value": "http://www.myOntology.com#d" } 
+	
       }
     ]
   }

@@ -443,11 +443,11 @@ public class OdinEvaluationModule extends AbstractEvaluationModule {
      *            against the system
      * @return answers, a list that contains all bindings
      */
-    protected ArrayList<HashMap<String, String>> getBindings(ResultSet results) {
+    protected ArrayList<HashMap<String, ResultValue>> getBindings(ResultSet results) {
 
-        ArrayList<HashMap<String, String>> answers = new ArrayList<HashMap<String, String>>();
+        ArrayList<HashMap<String, ResultValue>> answers = new ArrayList<HashMap<String, ResultValue>>();
         if (results == null)
-            return new ArrayList<HashMap<String, String>>();
+            return new ArrayList<HashMap<String, ResultValue>>();
         List<String> variables = results.getResultVars();
 
         while (results.hasNext()) {
@@ -455,18 +455,20 @@ public class OdinEvaluationModule extends AbstractEvaluationModule {
             QuerySolution solution = results.next();
             int bindingsCounter = 0;
             // get value of each named variable in this binding
-            HashMap<String, String> binding = new HashMap<String, String>();
+            HashMap<String, ResultValue> binding = new HashMap<String, ResultValue>();
 
             for (String variable : variables) {
                 // if the variable is part of the binding
                 if (solution.contains(variable) == true) {
                     // get the resource
                     RDFNode answer = solution.get(variable);
-                    if (answer.isLiteral()) {
-                        binding.put(variable, answer.asLiteral().getLexicalForm());
-                    } else {
-                        binding.put(variable, answer.asResource().getURI());
-                    }
+                    binding.put(variable, new ResultValue(answer));
+                    //if (answer.isLiteral()) {
+                        
+                        //binding.put(variable, new ResultValue(answer.asLiteral().getLexicalForm()));
+                    //} else {
+                        //binding.put(variable, new ResultValue(answer.asResource().getURI()));
+                    //}
                 } else {
                     binding.put(variable, null);
                 }
@@ -495,13 +497,13 @@ public class OdinEvaluationModule extends AbstractEvaluationModule {
         double streamBeginPoint = (double) Long.valueOf(RabbitMQUtils.readString(expectedBuffer)) / 1000l;
         double streamEndPoint = (double) Long.valueOf(RabbitMQUtils.readString(expectedBuffer)) / 1000l;
 
-        ArrayList<HashMap<String, String>> expectedAnswers = new ArrayList<HashMap<String, String>>();
+        ArrayList<HashMap<String, ResultValue>> expectedAnswers = new ArrayList<HashMap<String, ResultValue>>();
         InputStream inExpected = new ByteArrayInputStream(
                 RabbitMQUtils.readString(expectedBuffer).getBytes(StandardCharsets.UTF_8));
         ResultSet expected = ResultSetFactory.fromJSON(inExpected);
         expectedAnswers = this.getBindings(expected);
         ////////////////////////////////////////////////////////////////////////////////////////////////////
-        ArrayList<HashMap<String, String>> receivedAnswers = new ArrayList<HashMap<String, String>>();
+        ArrayList<HashMap<String, ResultValue>> receivedAnswers = new ArrayList<HashMap<String, ResultValue>>();
         InputStream inReceived = new ByteArrayInputStream(receivedData);
         ResultSet received = null;
         try {
@@ -518,9 +520,9 @@ public class OdinEvaluationModule extends AbstractEvaluationModule {
         int falsePositives = 0;
         int falseNegatives = 0;
 
-        for (HashMap<String, String> expectedBinding : expectedAnswers) {
+        for (HashMap<String, ResultValue> expectedBinding : expectedAnswers) {
             boolean tpFound = false;
-            for (HashMap<String, String> receivedBinding : receivedAnswers) {
+            for (HashMap<String, ResultValue> receivedBinding : receivedAnswers) {
                 if (expectedBinding.equals(receivedBinding)) {
                     tpFound = true;
                     break;
