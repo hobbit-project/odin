@@ -447,7 +447,7 @@ public class OdinEvaluationModule extends AbstractEvaluationModule {
 
         ArrayList<HashMap<String, String>> answers = new ArrayList<HashMap<String, String>>();
         if (results == null)
-            return null;
+            return new ArrayList<HashMap<String, String>>();
         List<String> variables = results.getResultVars();
 
         while (results.hasNext()) {
@@ -503,7 +503,14 @@ public class OdinEvaluationModule extends AbstractEvaluationModule {
         ////////////////////////////////////////////////////////////////////////////////////////////////////
         ArrayList<HashMap<String, String>> receivedAnswers = new ArrayList<HashMap<String, String>>();
         InputStream inReceived = new ByteArrayInputStream(receivedData);
-        ResultSet received = ResultSetFactory.fromJSON(inReceived);
+        ResultSet received = null;
+        try {
+            received = ResultSetFactory.fromJSON(inReceived);
+        } catch (Exception e) {
+            received = null;
+            LOGGER.error(
+                    "Evaluation module received results that are not in JSON format.\n Assigning empty results set to received results.");
+        }
         receivedAnswers = this.getBindings(received);
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -530,7 +537,7 @@ public class OdinEvaluationModule extends AbstractEvaluationModule {
         double recall = (double) truePositives / (double) (truePositives + falseNegatives);
         double precision = (double) truePositives / (double) (truePositives + falsePositives);
         double tps = (double) modelSize / (double) (streamEndPoint - streamBeginPoint);
-        
+
         if (Double.isNaN(precision) == true)
             precision = 0.0d;
         this.setSumPrecision(this.getSumPrecision() + precision);
@@ -573,33 +580,32 @@ public class OdinEvaluationModule extends AbstractEvaluationModule {
         // compute macro and micro averages KPIs
         double microAverageRecall = (double) this.getTotalTruePositives()
                 / (double) (this.getTotalTruePositives() + this.getTotalFalseNegatives());
-        if(Double.isNaN(microAverageRecall) == true)
+        if (Double.isNaN(microAverageRecall) == true)
             microAverageRecall = 0.0d;
-        
+
         double microAveragePrecision = (double) this.getTotalTruePositives()
                 / (double) (this.getTotalTruePositives() + this.getTotalFalsePositives());
-        if(Double.isNaN(microAveragePrecision) == true)
+        if (Double.isNaN(microAveragePrecision) == true)
             microAveragePrecision = 0.0d;
-        
-        
+
         double microAverageFmeasure = (double) (2.0 * microAverageRecall * microAveragePrecision)
                 / (double) (microAverageRecall + microAveragePrecision);
-        if(Double.isNaN(microAverageFmeasure) == true)
+        if (Double.isNaN(microAverageFmeasure) == true)
             microAverageFmeasure = 0.0d;
-        
+
         double macroAverageRecall = (double) this.getSumRecall() / (double) this.getTaskCounter();
-        if(Double.isNaN(macroAverageRecall) == true)
+        if (Double.isNaN(macroAverageRecall) == true)
             macroAverageRecall = 0.0d;
-        
+
         double macroAveragePrecision = (double) this.getSumPrecision() / (double) this.getTaskCounter();
-        if(Double.isNaN(macroAveragePrecision) == true)
+        if (Double.isNaN(macroAveragePrecision) == true)
             macroAveragePrecision = 0.0d;
-        
+
         double macroAverageFmeasure = (double) (2.0 * macroAverageRecall * macroAveragePrecision)
                 / (double) (macroAverageRecall + macroAveragePrecision);
-        if(Double.isNaN(macroAverageFmeasure) == true)
-            macroAverageFmeasure = 0.0d;       
-        
+        if (Double.isNaN(macroAverageFmeasure) == true)
+            macroAverageFmeasure = 0.0d;
+
         //////////////////////////////////////////////////////////////////////////////////////////////
         Resource experiment = this.finalModel.createResource(experimentUri);
         this.finalModel.add(experiment, RDF.type, HOBBIT.Experiment);
@@ -611,8 +617,7 @@ public class OdinEvaluationModule extends AbstractEvaluationModule {
         Literal averageTaskDelayLiteral = finalModel.createTypedLiteral(averageTaskDelay, XSDDatatype.XSDdouble);
         finalModel.add(experiment, EVALUATION_AVERAGE_TASK_DELAY, averageTaskDelayLiteral);
 
-        Literal microAverageRecallLiteral = finalModel.createTypedLiteral(microAverageRecall,
-                XSDDatatype.XSDdouble);
+        Literal microAverageRecallLiteral = finalModel.createTypedLiteral(microAverageRecall, XSDDatatype.XSDdouble);
         finalModel.add(experiment, EVALUATION_MICRO_AVERAGE_RECALL, microAverageRecallLiteral);
 
         Literal microAveragePrecisionLiteral = finalModel.createTypedLiteral(microAveragePrecision,
@@ -623,8 +628,7 @@ public class OdinEvaluationModule extends AbstractEvaluationModule {
                 XSDDatatype.XSDdouble);
         finalModel.add(experiment, EVALUATION_MICRO_AVERAGE_FMEASURE, microAverageFmeasureLiteral);
 
-        Literal macroAverageRecallLiteral = finalModel.createTypedLiteral(macroAverageRecall,
-                XSDDatatype.XSDdouble);
+        Literal macroAverageRecallLiteral = finalModel.createTypedLiteral(macroAverageRecall, XSDDatatype.XSDdouble);
         finalModel.add(experiment, EVALUATION_MACRO_AVERAGE_RECALL, macroAverageRecallLiteral);
 
         Literal macroAveragePrecisionLiteral = finalModel.createTypedLiteral(macroAveragePrecision,
@@ -691,8 +695,7 @@ public class OdinEvaluationModule extends AbstractEvaluationModule {
                     finalModel.createLiteral(DataSetStructure.publisher, "en"));
 
             // "2010-08-11"^^xsd:date;
-            taskEvaluationResource.addProperty(
-                    finalModel.createProperty(CubeDatasetProperties.DATE.getPropertyURI()),
+            taskEvaluationResource.addProperty(finalModel.createProperty(CubeDatasetProperties.DATE.getPropertyURI()),
                     finalModel.createTypedLiteral(DataSetStructure.date, XSDDatatype.XSDdateTime));
 
             // dct:subject sdmx-subject:2.9 ;
@@ -714,16 +717,14 @@ public class OdinEvaluationModule extends AbstractEvaluationModule {
             /////////////////////////////////////////////////////////////////////////////////////////////
             // -- Data structure definition --
             kpiStructure.addProperty(RDF.type, finalModel.createResource(DataSetStructure.datasetStrucute));
-            Property componentProperty = finalModel
-                    .createProperty(CubeDatasetProperties.COMPONENT.getPropertyURI());
+            Property componentProperty = finalModel.createProperty(CubeDatasetProperties.COMPONENT.getPropertyURI());
 
             // qb:component [ qb:dimension bench:taskID];
             Resource taskID = finalModel.createResource(DataSetStructure.dimension);
             // e.g.
             // http://w3id.org/bench#Delay_Dataset_for_1231433223_taskIDComponent
             Resource taskIDAnon = finalModel.createResource(l + "DimensionComponent");
-            taskIDAnon.addProperty(finalModel.createProperty(CubeDatasetProperties.DIMENSION.getPropertyURI()),
-                    taskID);
+            taskIDAnon.addProperty(finalModel.createProperty(CubeDatasetProperties.DIMENSION.getPropertyURI()), taskID);
             kpiStructure.addProperty(componentProperty, taskIDAnon);
 
             // qb:component [ qb:measure bench:recall];
@@ -731,8 +732,7 @@ public class OdinEvaluationModule extends AbstractEvaluationModule {
             // e.g.
             // http://w3id.org/bench#Delay_Dataset_for_1231433223_MeasureComponent
             Resource measureAnon = finalModel.createResource(l + "MeasureComponent");
-            measureAnon.addProperty(finalModel.createProperty(CubeDatasetProperties.MEASURE.getPropertyURI()),
-                    measure);
+            measureAnon.addProperty(finalModel.createProperty(CubeDatasetProperties.MEASURE.getPropertyURI()), measure);
             kpiStructure.addProperty(componentProperty, measureAnon);
 
             /*
@@ -744,13 +744,13 @@ public class OdinEvaluationModule extends AbstractEvaluationModule {
             // e.g.
             // http://w3id.org/bench#Delay_Dataset_for_1231433223AttributeComponent
             Resource attributeAnon = finalModel.createResource(l + "AttributeComponent");
-            
+
             attributeAnon.addProperty(finalModel.createProperty(CubeDatasetProperties.ATTRIBUTE.getPropertyURI()),
                     finalModel.createProperty(DataSetStructure.unitMeasureObject));
-            
+
             attributeAnon.addProperty(finalModel.createProperty(CubeDatasetProperties.REQUIRED.getPropertyURI()),
                     finalModel.createTypedLiteral(new Boolean(true)));
-            
+
             attributeAnon.addProperty(finalModel.createProperty(CubeDatasetProperties.ATTACHMENT.getPropertyURI()),
                     finalModel.createResource(DataSetStructure.dataset));
 
