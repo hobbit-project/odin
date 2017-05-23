@@ -1,10 +1,8 @@
 package org.hobbit.odin.systems.virtuoso;
 
 import java.io.IOException;
-import java.net.ConnectException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -13,21 +11,15 @@ import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactoryHttp;
 import org.aksw.jena_sparql_api.core.utils.UpdateRequestUtils;
 import org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp;
-import org.aksw.jena_sparql_api.pagination.core.QueryExecutionFactoryPaginated;
-import org.aksw.jena_sparql_api.stmt.SparqlQueryParserImpl;
 import org.apache.commons.io.output.ByteArrayOutputStream;
-import org.apache.http.HttpException;
-import org.apache.http.conn.HttpHostConnectException;
 import org.apache.jena.atlas.web.auth.HttpAuthenticator;
 import org.apache.jena.atlas.web.auth.SimpleAuthenticator;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.ResultSetFormatter;
-import org.apache.jena.sparql.core.DatasetDescription;
 import org.apache.jena.update.UpdateRequest;
 import org.hobbit.core.components.AbstractSystemAdapter;
 import org.hobbit.core.rabbit.RabbitMQUtils;
-import org.hobbit.odin.util.OdinConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -113,7 +105,7 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
 
             // create execution factory
             queryExecFactory = new QueryExecutionFactoryHttp("http://" + virtuosoContName + ":8890/sparql");
-            queryExecFactory = new QueryExecutionFactoryPaginated(queryExecFactory, 100);
+            //queryExecFactory = new QueryExecutionFactoryPaginated(queryExecFactory, 100);
 
             // create update factory
             HttpAuthenticator auth = new SimpleAuthenticator("dba", "dba".toCharArray());
