@@ -72,6 +72,7 @@ public class OdinEvaluationModule extends AbstractEvaluationModule {
     private double sumTaskDelay = 0;
     /* Number of tasks */
     private int taskCounter = 0;
+    private int delayCounter = 0;
     /*
      * Map with keys the unique time stamps that tasks were sent to the System
      * Adapter and as values the corresponding tasks
@@ -463,12 +464,14 @@ public class OdinEvaluationModule extends AbstractEvaluationModule {
                     // get the resource
                     RDFNode answer = solution.get(variable);
                     binding.put(variable, new ResultValue(answer));
-                    //if (answer.isLiteral()) {
-                        
-                        //binding.put(variable, new ResultValue(answer.asLiteral().getLexicalForm()));
-                    //} else {
-                        //binding.put(variable, new ResultValue(answer.asResource().getURI()));
-                    //}
+                    // if (answer.isLiteral()) {
+
+                    // binding.put(variable, new
+                    // ResultValue(answer.asLiteral().getLexicalForm()));
+                    // } else {
+                    // binding.put(variable, new
+                    // ResultValue(answer.asResource().getURI()));
+                    // }
                 } else {
                     binding.put(variable, null);
                 }
@@ -487,8 +490,13 @@ public class OdinEvaluationModule extends AbstractEvaluationModule {
         LOGGER.info("Evaluation of task begins.");
 
         // delay must be in seconds
-        double delay = (double) (responseReceivedTimestamp - taskSentTimestamp) / 1000l;
-        this.setSumTaskDelay(this.getSumTaskDelay() + delay);
+        double delay = 0;
+        if (responseReceivedTimestamp > 0) {
+            delay = (responseReceivedTimestamp - taskSentTimestamp) / 1000d;
+            this.setSumTaskDelay(this.getSumTaskDelay() + delay);
+            ++this.delayCounter;
+        }
+
         this.setTaskCounter(this.getTaskCounter() + 1);
         // read expected data
         ByteBuffer expectedBuffer = ByteBuffer.wrap(expectedData);
@@ -576,7 +584,7 @@ public class OdinEvaluationModule extends AbstractEvaluationModule {
             this.experimentUri = env.get(Constants.HOBBIT_EXPERIMENT_URI_KEY);
         }
 
-        double averageTaskDelay = (double) this.getSumTaskDelay() / (double) this.getTaskCounter();
+        double averageTaskDelay = (double) this.getSumTaskDelay() / (double) this.delayCounter;
         double averageTPS = (double) this.getSumStreamModel() / (double) this.getSumStreamInterval();
 
         // compute macro and micro averages KPIs
