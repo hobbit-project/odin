@@ -25,7 +25,7 @@ If you want to run ODIN, please follow the guidelines found here: https://github
 * Number of data generators - agents: The number of Data Generators for this experiment. The default value is 2.
 
 * Name of mimicking algorithm: The name of the mimicking algorithm to be invoked to generate data. There are two available values: TRANSPORT\_DATA (https://github.com/PoDiGG/podigg), that invokes the mimicking algorithm developed by iMec for public transport 
-  and (TWIG) (https://github.com/AKSW/TWIG), that invokes the mimicking algorithm developed for workpackage T3.2 for Twitter messages. The default value is TRANSPORT\_DATA.
+  and (TWIG) (https://github.com/AKSW/TWIG), that invokes the mimicking algorithm for Twitter messages. The default value is TRANSPORT\_DATA.
   
 * Seed for mimicking algorithm: The seed value for a mimicking algorithm. The default value is 100.
 
