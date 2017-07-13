@@ -9,11 +9,9 @@ TODO: specify the requirements, for example:
 * Docker 17.03
 
 # Building Instructions
-TODO: how to compile the project and build the docker images
 
 # Uploading Benchmark to HOBBIT Platform
-TODO: how to upload docker images to gitlab
+Guidelines on how to upload a benchmark can be found here: https://github.com/hobbit-project/platform/wiki/Benchmark-your-system
 
 # Running the Benchmark
-TODO: how to run the benchmark on HOBBIT platform
-TODO: include screenshots here
+
