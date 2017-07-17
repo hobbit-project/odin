@@ -33,7 +33,13 @@ WORKDIR /odin
 CMD java -cp odin.jar org.hobbit.core.run.ComponentStarter org.hobbit.odin.odintaskgenerator.X
 
 
-where X is the name of the corresponding ODIN component.
+where X is the name of the corresponding ODIN component. 
+This docker file tells:
+* that the image extends a container in which a Java program can be run,
+* that the generated jar file should be copied to the /odin/ directory,
+* that this directory is our working directory and
+* that it should execute the ComponentStarter that will load our component X
+
 
 If the user wants to create docker image for OdinDataGenerator, he/she must use the following commands:
 
@@ -47,7 +53,7 @@ WORKDIR /odin
 
 CMD java -cp odin.jar org.hobbit.core.run.ComponentStarter org.hobbit.odin.odindatagenerator.OdinDataGenerator
 
-the line **ADD scripts/download.sh /odin/download.sh** adds the script download.sh (included in the repository) into the docker container, so that the user can run ODIN using the TWIG mimicking algorithm
+which is the same as the previous example apart from the line **ADD scripts/download.sh /odin/download.sh**. This line adds the script download.sh (included in the repository) into the docker container working directory /odin/, so that the user can run ODIN using the TWIG mimicking algorithm.
 
 **Description of ODIN parameters**:
 * Duration of the benchmark: The user must determine the duration of the task by assigning a value in milliseconds to the field. The default value is set to 600,000ms. Note that the duration of each experiment is at most 40min.
