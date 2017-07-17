@@ -7,7 +7,7 @@ Guidelines on how to upload a benchmark can be found here: https://github.com/ho
 
 # Building the Benchmark
 * Download and clone this repository
-* Open command line, use appropriate commands to enter the folder that contains the context of the repository, type mvn clean package -U -Dmaven.test.skip=true and press enter.
+* Open command line, use appropriate commands to enter the folder that contains the context of the repository, type **mvn clean package -U -Dmaven.test.skip=true** and press enter.
 
 # Running the Benchmark
 If you want to run ODIN, please follow the guidelines found here: https://github.com/hobbit-project/platform/wiki/Experiments
