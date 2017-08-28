@@ -763,4 +763,10 @@ public class OdinDataGenerator extends AbstractDataGenerator {
         this.task = task;
     }
 
+    
+
+    public void setDefaultGraph(String string) {
+        this.defaultGraph = string;
+        
+    }
 }

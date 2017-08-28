@@ -2,6 +2,7 @@ package org.hobbit.odin;
 
 import org.hobbit.core.Commands;
 import org.hobbit.core.components.AbstractBenchmarkController;
+import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.hobbit.odin.systems.virtuoso.VirtuosoSystemAdapterConstants;
 import org.hobbit.odin.util.OdinConstants;
 import org.slf4j.Logger;
@@ -189,7 +190,7 @@ public class OdinBenchmarkController extends AbstractBenchmarkController {
             LOGGER.error(
                     "Couldn't get the number of inserted queries until a select query is performed from the parameter model. Using the default value.");
             numberOfInsertQueries = 10;
-            
+
         }
 
         /* Benchmark duration */
@@ -269,10 +270,10 @@ public class OdinBenchmarkController extends AbstractBenchmarkController {
 
             minMaxTimestampMutex.release();
         } else if (OdinConstants.BULK_LOAD_FROM_DATAGENERATOR == command) {
-            //this will be send by data gens
+            // this will be send by data gens
             bulkLoadMutex.release();
         } else if (VirtuosoSystemAdapterConstants.BULK_LOADING_DATA_FINISHED == command) {
-            //this will be send by the sys adapter
+            // this will be send by the sys adapter
             sysAdapterMutex.release();
         }
         super.receiveCommand(command, data);
@@ -292,12 +293,16 @@ public class OdinBenchmarkController extends AbstractBenchmarkController {
         LOGGER.info("Signal from ALL Data Generators received.");
         // sends message to sys adapter
         LOGGER.info("Message sent to System Adapter that bulk load phase is over.");
-        sendToCmdQueue(VirtuosoSystemAdapterConstants.BULK_LOAD_DATA_GEN_FINISHED);
-        //wait until message is received from sys adapter to continue
+        byte[][] data = new byte[2][];
+        data[0] = RabbitMQUtils.writeString(Integer.toString(this.numberOfDataGenerators));
+        data[1] = RabbitMQUtils.writeString(Boolean.toString(true));
+        sendToCmdQueue(VirtuosoSystemAdapterConstants.BULK_LOAD_DATA_GEN_FINISHED, RabbitMQUtils.writeByteArrays(data));
+
+        // wait until message is received from sys adapter to continue
         LOGGER.info("Waiting until System Adapter sends message that it's done with bulk load phase.");
         sysAdapterMutex.acquire(1);
         LOGGER.info("Signal from System Adapter received.");
-        //send message to data gens to go ahead
+        // send message to data gens to go ahead
         sendToCmdQueue(OdinConstants.BULK_LOAD_FROM_CONTROLLER);
         // wait for the data generators to finish their work
         waitForDataGenToFinish();

@@ -5,6 +5,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.aksw.jena_sparql_api.core.FluentQueryExecutionFactory;
 import org.aksw.jena_sparql_api.core.QueryExecutionFactory;
@@ -42,6 +43,8 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
     private org.aksw.jena_sparql_api.core.QueryExecutionFactory queryExecFactory;
     private org.aksw.jena_sparql_api.core.UpdateExecutionFactory updateExecFactory;
 
+    private AtomicInteger totalMessages = new AtomicInteger(0);
+
     private boolean phase2 = true;
 
     List<String> graphUris = new ArrayList<String>();
@@ -72,12 +75,8 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
                 "DEFAULT_GRAPH=http://www.virtuoso-graph.com/" };
         virtuosoContName = this.createContainer("tenforce/virtuoso:latest", envVariablesVirtuoso);
 
-        
-        
-        QueryExecutionFactory qef = FluentQueryExecutionFactory
-                .http("http://" + virtuosoContName + ":8890/sparql").config().withPagination(50000)
-                .end().create();
-
+        QueryExecutionFactory qef = FluentQueryExecutionFactory.http("http://" + virtuosoContName + ":8890/sparql")
+                .config().withPagination(50000).end().create();
 
         ResultSet testResults = null;
         while (testResults == null) {
@@ -95,37 +94,56 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
             }
         }
         qef.close();
-        
+
     }
 
     @Override
     public void receiveCommand(byte command, byte[] data) {
         if (VirtuosoSystemAdapterConstants.BULK_LOAD_DATA_GEN_FINISHED == command) {
-            LOGGER.info("Bulk phase begins");
 
             // create execution factory
             queryExecFactory = new QueryExecutionFactoryHttp("http://" + virtuosoContName + ":8890/sparql");
-            //queryExecFactory = new QueryExecutionFactoryPaginated(queryExecFactory, 100);
+            // queryExecFactory = new
+            // QueryExecutionFactoryPaginated(queryExecFactory, 100);
 
             // create update factory
             HttpAuthenticator auth = new SimpleAuthenticator("dba", "dba".toCharArray());
             updateExecFactory = new UpdateExecutionFactoryHttp("http://" + virtuosoContName + ":8890/sparql", auth);
 
-            // LOGGER.info("Received graph URIs:"+graphUris.size());
-            for (String uri : this.graphUris) {
-                // LOGGER.info(uri);
-                String create = "CREATE GRAPH " + "<" + uri + ">";
-                UpdateRequest updateRequest = UpdateRequestUtils.parse(create);
-                updateExecFactory.createUpdateProcessor(updateRequest).execute();
+            Thread thread = new Thread() {
+                public void run() {
+                    int messagesSent = Integer.parseInt(RabbitMQUtils.readString(data));
+                    int messagesReceived = totalMessages.get();
+                    while (messagesSent != messagesReceived) {
+                        try {
+                            TimeUnit.SECONDS.sleep(2);
 
-            }
-            phase2 = false;
-            try {
-                sendToCmdQueue(VirtuosoSystemAdapterConstants.BULK_LOADING_DATA_FINISHED);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            LOGGER.info("Bulk phase is over.");
+                        } catch (Exception e) {
+                        }
+                        messagesReceived = totalMessages.get();
+
+                    }
+                    LOGGER.info("Bulk phase begins");
+                    // LOGGER.info("Received graph URIs:"+graphUris.size());
+                    for (String uri : graphUris) {
+                        // LOGGER.info(uri);
+                        String create = "CREATE GRAPH " + "<" + uri + ">";
+                        UpdateRequest updateRequest = UpdateRequestUtils.parse(create);
+                        updateExecFactory.createUpdateProcessor(updateRequest).execute();
+                    }
+                    phase2 = false;
+                    try {
+                        sendToCmdQueue(VirtuosoSystemAdapterConstants.BULK_LOADING_DATA_FINISHED);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    LOGGER.info("Bulk phase is over.");
+                }
+            };
+
+            thread.start();
+
+            
         }
         super.receiveCommand(command, data);
     }
@@ -138,6 +156,7 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
             String graphUri = RabbitMQUtils.readString(buffer);
             LOGGER.info("Receiving graph URI " + graphUri);
             graphUris.add(graphUri);
+            this.totalMessages.incrementAndGet();
         } else {
             LOGGER.info("INSERT SPARQL query received.");
             this.insertsReceived++;
