@@ -115,6 +115,7 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
                     int messagesSent = Integer.parseInt(RabbitMQUtils.readString(data));
                     int messagesReceived = totalMessages.get();
                     while (messagesSent != messagesReceived) {
+                        LOGGER.info("Messages received and sent are not equal");
                         try {
                             TimeUnit.SECONDS.sleep(2);
 
