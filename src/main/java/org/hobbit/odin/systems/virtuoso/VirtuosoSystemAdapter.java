@@ -43,8 +43,10 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
     private org.aksw.jena_sparql_api.core.QueryExecutionFactory queryExecFactory;
     private org.aksw.jena_sparql_api.core.UpdateExecutionFactory updateExecFactory;
 
-    private AtomicInteger totalMessages = new AtomicInteger(0);
+    private AtomicInteger totalReceived = new AtomicInteger(0);
+    private AtomicInteger totalSent = new AtomicInteger(0);
 
+    
     private boolean phase2 = true;
 
     List<String> graphUris = new ArrayList<String>();
@@ -95,25 +97,24 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
         }
         qef.close();
 
+        // create execution factory
+        queryExecFactory = new QueryExecutionFactoryHttp("http://" + virtuosoContName + ":8890/sparql");
+        // queryExecFactory = new
+        // QueryExecutionFactoryPaginated(queryExecFactory, 100);
+
+        // create update factory
+        HttpAuthenticator auth = new SimpleAuthenticator("dba", "dba".toCharArray());
+        updateExecFactory = new UpdateExecutionFactoryHttp("http://" + virtuosoContName + ":8890/sparql", auth);
     }
 
     @Override
     public void receiveCommand(byte command, byte[] data) {
         if (VirtuosoSystemAdapterConstants.BULK_LOAD_DATA_GEN_FINISHED == command) {
 
-            // create execution factory
-            queryExecFactory = new QueryExecutionFactoryHttp("http://" + virtuosoContName + ":8890/sparql");
-            // queryExecFactory = new
-            // QueryExecutionFactoryPaginated(queryExecFactory, 100);
-
-            // create update factory
-            HttpAuthenticator auth = new SimpleAuthenticator("dba", "dba".toCharArray());
-            updateExecFactory = new UpdateExecutionFactoryHttp("http://" + virtuosoContName + ":8890/sparql", auth);
-
             Thread thread = new Thread() {
                 public void run() {
-                    int messagesSent = Integer.parseInt(RabbitMQUtils.readString(data));
-                    int messagesReceived = totalMessages.get();
+                    int messagesSent = totalSent.addAndGet(Integer.parseInt(RabbitMQUtils.readString(data)));
+                    int messagesReceived = totalReceived.get();
                     while (messagesSent != messagesReceived) {
                         LOGGER.info("Messages received and sent are not equal");
                         try {
@@ -121,7 +122,7 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
 
                         } catch (Exception e) {
                         }
-                        messagesReceived = totalMessages.get();
+                        messagesReceived = totalReceived.get();
 
                     }
                     LOGGER.info("Bulk phase begins");
@@ -157,7 +158,7 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
             String graphUri = RabbitMQUtils.readString(buffer);
             LOGGER.info("Receiving graph URI " + graphUri);
             graphUris.add(graphUri);
-            this.totalMessages.incrementAndGet();
+            this.totalReceived.incrementAndGet();
         } else {
             LOGGER.info("INSERT SPARQL query received.");
             this.insertsReceived++;
