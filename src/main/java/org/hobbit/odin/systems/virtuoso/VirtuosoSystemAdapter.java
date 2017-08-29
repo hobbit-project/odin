@@ -113,8 +113,14 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
 
             Thread thread = new Thread() {
                 public void run() {
-                    int messagesSent = totalSent.addAndGet(Integer.parseInt(RabbitMQUtils.readString(data)));
+                    
+                    ByteBuffer buffer = ByteBuffer.wrap(data);
+                    int numberOfMessages = buffer.getInt();
+                    boolean lastBulkLoad = buffer.get() != 0;
+                    
+                    int messagesSent = totalSent.addAndGet(numberOfMessages);
                     int messagesReceived = totalReceived.get();
+                    
                     while (messagesSent != messagesReceived) {
                         LOGGER.info("Messages received and sent are not equal");
                         try {
@@ -133,7 +139,7 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
                         UpdateRequest updateRequest = UpdateRequestUtils.parse(create);
                         updateExecFactory.createUpdateProcessor(updateRequest).execute();
                     }
-                    phase2 = false;
+                    
                     try {
                         sendToCmdQueue(VirtuosoSystemAdapterConstants.BULK_LOADING_DATA_FINISHED);
                     } catch (IOException e) {
@@ -144,7 +150,7 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
             };
 
             thread.start();
-
+            phase2 = false;
             
         }
         super.receiveCommand(command, data);

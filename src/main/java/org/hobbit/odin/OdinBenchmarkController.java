@@ -293,10 +293,11 @@ public class OdinBenchmarkController extends AbstractBenchmarkController {
         LOGGER.info("Signal from ALL Data Generators received.");
         // sends message to sys adapter
         LOGGER.info("Message sent to System Adapter that bulk load phase is over.");
-        byte[][] data = new byte[2][];
-        data[0] = RabbitMQUtils.writeString(Integer.toString(this.numberOfDataGenerators));
-        data[1] = RabbitMQUtils.writeString(Boolean.toString(true));
-        sendToCmdQueue(VirtuosoSystemAdapterConstants.BULK_LOAD_DATA_GEN_FINISHED, RabbitMQUtils.writeByteArrays(data));
+        boolean lastBulkLoad = true;
+        ByteBuffer buffer = ByteBuffer.allocate(5);
+        buffer.putInt(this.numberOfDataGenerators);
+        buffer.put(lastBulkLoad ? (byte) 1 : (byte) 0);
+        sendToCmdQueue(VirtuosoSystemAdapterConstants.BULK_LOAD_DATA_GEN_FINISHED, buffer.array());
 
         // wait until message is received from sys adapter to continue
         LOGGER.info("Waiting until System Adapter sends message that it's done with bulk load phase.");
