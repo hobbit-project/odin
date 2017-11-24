@@ -28,4 +28,4 @@ echo "Deleted .tar"
 cd ../../
 echo "Now trying to run twig"
 
-java -jar -Xmx100G /odin/TWIG/target/twig-parent-0.0.1-SNAPSHOT.jar Automaton /odin/TWIG/sample/analysis/word_matrix_0.obj /odin/TWIG/sample/analysis/message_count_0.obj /odin/TWIG/sample/analysis/time_count_0.obj $1 $2 $3 $4 $5
+java -jar -Xmx100G target/twig-parent-0.0.1-SNAPSHOT.jar Automaton sample/analysis/word_matrix_0.obj sample/analysis/message_count_0.obj sample/analysis/time_count_0.obj $1 $2 $3 $4 $5
