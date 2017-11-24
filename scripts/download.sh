@@ -13,9 +13,9 @@
 #
 export MAVEN_OPTS="-Xmx100GB" 
 # 1.
-git clone https://github.com/AKSW/TWIG.git /odin/TWIG
+git clone https://github.com/AKSW/TWIG.git
 # 2.
-cd /odin/TWIG
+cd TWIG
 ./build.sh
 # 3. 
 cd sample/analysis
