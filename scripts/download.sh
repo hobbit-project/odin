@@ -15,9 +15,10 @@ export MAVEN_OPTS="-Xmx100GB"
 # 1.
 git clone https://github.com/AKSW/TWIG.git /odin/TWIG
 # 2.
-cd /odin/TWIG && ./build.sh
+cd /odin/TWIG
+./build.sh
 # 3. 
-cd /odin/TWIG/sample/analysis
+cd sample/analysis
 # 4. 
 wget http://hobbitdata.informatik.uni-leipzig.de/TWIG/data.tar.gz
 tar -xzf data.tar.gz
