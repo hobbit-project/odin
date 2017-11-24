@@ -11,7 +11,6 @@
 #
 #################################################################
 #
-export MAVEN_OPTS="-Xmx100GB" 
 # 1.
 git clone https://github.com/AKSW/TWIG.git
 # 2.
