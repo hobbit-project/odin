@@ -13,11 +13,11 @@
 #
 export MAVEN_OPTS="-Xmx100GB" 
 # 1.
-git clone https://github.com/AKSW/TWIG.git /TWIG
+git clone https://github.com/AKSW/TWIG.git /odin/TWIG
 # 2.
-cd /TWIG && ./build.sh
+cd /odin/TWIG && ./build.sh
 # 3. 
-cd /TWIG/sample/analysis
+cd /odin/TWIG/sample/analysis
 # 4. 
 wget http://hobbitdata.informatik.uni-leipzig.de/TWIG/data.tar.gz
 tar -xzf data.tar.gz
@@ -27,4 +27,4 @@ echo "Deleted .tar"
 cd ../../
 echo "Now trying to run twig"
 
-java -jar -Xmx100G TWIG/target/twig-parent-0.0.1-SNAPSHOT.jar Automaton TWIG/sample/analysis/word_matrix_0.obj TWIG/sample/analysis/message_count_0.obj TWIG/sample/analysis/time_count_0.obj $1 $2 $3 $4 $5
+java -jar -Xmx100G /odin/TWIG/target/twig-parent-0.0.1-SNAPSHOT.jar Automaton /odin/TWIG/sample/analysis/word_matrix_0.obj /odin/TWIG/sample/analysis/message_count_0.obj /odin/TWIG/sample/analysis/time_count_0.obj $1 $2 $3 $4 $5
