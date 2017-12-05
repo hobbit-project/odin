@@ -19,7 +19,7 @@ cd TWIG
 # 3. 
 cd sample/analysis
 # 4. 
-wget http://hobbitdata.informatik.uni-leipzig.de/TWIG/data.tar.gz
+wget -q http://hobbitdata.informatik.uni-leipzig.de/TWIG/data.tar.gz
 tar -xzf data.tar.gz
 rm data.tar.gz
 echo "Deleted .tar"
