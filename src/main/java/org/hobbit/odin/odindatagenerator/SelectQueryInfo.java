@@ -9,14 +9,19 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.TreeSet;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.Path;
 
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.jena.atlas.io.IndentedWriter;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
@@ -24,6 +29,7 @@ import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryFactory;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.riot.RDFDataMgr;
@@ -39,12 +45,76 @@ import org.apache.log4j.Logger;
  * query given a file.
  * 
  * @author Kleanthi Georgala (georgala@informatik.uni-leipzig.de)
- * @version 1.0
+ * @version 2.0
  *
  */
+
 public class SelectQueryInfo {
 
+    public HashMap<Integer, Pair<Triple, Node>> getSubjectTPs() {
+        return subjectTPs;
+    }
+
+    public void setSubjectTPs(HashMap<Integer, Pair<Triple, Node>> subjectTPs) {
+        this.subjectTPs = subjectTPs;
+    }
+
+    public HashMap<Integer, Pair<Triple, Node>> getPredicateTPs() {
+        return predicateTPs;
+    }
+
+    public void setPredicateTPs(HashMap<Integer, Pair<Triple, Node>> predicateTPs) {
+        this.predicateTPs = predicateTPs;
+    }
+
+    public HashMap<Integer, Pair<Triple, Node>> getObjectTPs() {
+        return objectTPs;
+    }
+
+    public void setObjectTPs(HashMap<Integer, Pair<Triple, Node>> objectTPs) {
+        this.objectTPs = objectTPs;
+    }
+
+    public int getQuadCounter() {
+        return quadCounter;
+    }
+
+    public void setQuadCounter(int quadCounter) {
+        this.quadCounter = quadCounter;
+    }
+
+    public Set<Integer> getTriplesCovered() {
+        return triplesCovered;
+    }
+
+    public void setTriplesCovered(Set<Integer> triplesCovered) {
+        this.triplesCovered = triplesCovered;
+    }
+
+    public int getVariableCounter() {
+        return variableCounter;
+    }
+
+    public void setVariableCounter(int variableCounter) {
+        this.variableCounter = variableCounter;
+    }
+
+    public String getSelectQueryFile() {
+        return selectQueryFile;
+    }
+
+    public void setSelectQueryFile(String selectQueryFile) {
+        this.selectQueryFile = selectQueryFile;
+    }
+
     protected static final Logger logger = Logger.getLogger(SelectQueryInfo.class.getName());
+    HashMap<Integer, Pair<Triple, Node>> subjectTPs = new HashMap<Integer, Pair<Triple, Node>>();
+    HashMap<Integer, Pair<Triple, Node>> predicateTPs = new HashMap<Integer, Pair<Triple, Node>>();
+    HashMap<Integer, Pair<Triple, Node>> objectTPs = new HashMap<Integer, Pair<Triple, Node>>();
+    int quadCounter = 0;
+    Set<Integer> triplesCovered = new TreeSet<Integer>();
+    int variableCounter = 0;
+    HashMap<String, HashSet<Node>> variables = new HashMap<String, HashSet<Node>>();
 
     /* Time stamp of executing the SELECT query */
     private long timeStamp;
@@ -160,7 +230,7 @@ public class SelectQueryInfo {
         Map<Node, HashMap<Integer, ArrayList<Integer>>> resultSet = new HashMap<Node, HashMap<Integer, ArrayList<Integer>>>();
         StmtIterator it = model.listStatements();
         int quadCounter = 1;
-        
+
         while (it.hasNext()) {
             Statement statement = it.next();
             Triple triple = statement.asTriple();
@@ -220,7 +290,6 @@ public class SelectQueryInfo {
             //////////////////////////////
 
             quadCounter++;
-        
 
         }
 
@@ -323,7 +392,6 @@ public class SelectQueryInfo {
 
     }
 
-<<<<<<< HEAD
     /**
      * Iterates over the statements of a model and creates all possible triple
      * patterns with one variable. Then, it places each TP into 3 subsets: (i)
@@ -774,6 +842,4 @@ public class SelectQueryInfo {
 
     }
 
-=======
->>>>>>> d4c6c344f104669117a6857d8d385aa9360a7abe
 }
