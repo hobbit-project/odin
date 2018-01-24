@@ -543,6 +543,7 @@ public class OdinDataGenerator extends AbstractDataGenerator {
         int d = insertList.size() / getDATA_GENERATOR_INSERT_QUERIES();
 
         for (Map.Entry<Long, ArrayList<String>> entry : insertList.entrySet()) {
+
             Long originalCurrentTS = entry.getKey();
             ArrayList<String> files = entry.getValue();
 
@@ -620,6 +621,7 @@ public class OdinDataGenerator extends AbstractDataGenerator {
 
             }
             if ((iCounter % getDATA_GENERATOR_INSERT_QUERIES()) == 0) {
+                LOGGER.info("Creating stream no."+streamID);
                 streamID++;
             }
 

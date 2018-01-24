@@ -744,6 +744,7 @@ public class SelectQueryInfo {
     public void createSelectQuery(ArrayList<InsertQueryInfo> insertQueries, String outputFolder, int streamCounter,
             String graphName) {
 
+        logger.info("Creating SELECT query for stream no."+streamCounter);
         outputFolder = outputFolder + "selectQueries/";
         File newFolder = new File(outputFolder);
         if (!newFolder.exists())
@@ -756,7 +757,7 @@ public class SelectQueryInfo {
             tempModel.read(fileName);
             model.add(tempModel);
         }
-
+        logger.info("Stream no."+streamCounter+". Model size: "+model.size());
         createSets(model);
 
         Op op = null;
@@ -827,6 +828,12 @@ public class SelectQueryInfo {
             e.printStackTrace();
             logger.error("File doesn't exist. " + fileName);
             throw new RuntimeException();
+        }
+        try {
+            outStream.close();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
         }
         IndentedWriter out = new IndentedWriter(outStream);
         q.output(out);
