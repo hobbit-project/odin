@@ -30,7 +30,7 @@ import org.slf4j.LoggerFactory;
  * query to the Task Generator.
  * 
  * @author Kleanthi Georgala (georgala@informatik.uni-leipzig.de)
- * @version 2.0
+ * @version 1.0
  *
  */
 public class OdinDataGenerator extends AbstractDataGenerator {
@@ -583,8 +583,10 @@ public class OdinDataGenerator extends AbstractDataGenerator {
             if (((iCounter == insertList.size()) && rest != 0)
                     || ((iCounter % getDATA_GENERATOR_INSERT_QUERIES()) == 0)) {
 
-                ArrayList<InsertQueryInfo> insertQueries = this.streams.get(streamID).getInsertQueries();
-                
+                // get last insert query
+                int lastInsertIndex = this.streams.get(streamID).getSizeOfInserts() - 1;
+                InsertQueryInfo lastInsertQuery = this.streams.get(streamID).getInsertQueryInfo(lastInsertIndex);
+
                 // create the select query of the stream
                 SelectQueryInfo selectQuery = new SelectQueryInfo();
                 long selectQueryDelay = (long) (this.initialSelectDelay / Math.pow(2, (streamID - 1)));
@@ -605,7 +607,7 @@ public class OdinDataGenerator extends AbstractDataGenerator {
                 selectQuery.setTimeStamp(selectQueryTS);
                 // create the select query given the last insert query of the
                 // current batch
-                selectQuery.createSelectQuery(insertQueries, getDATA_GENERATOR_OUTPUT_DATASET(),
+                selectQuery.createSelectQuery(lastInsertQuery.getModelFile(), getDATA_GENERATOR_OUTPUT_DATASET(),
                         streamID, defaultGraph);
                 // create a reference set for this select query
                 String resultSetFile = reference.queryTDB(selectQuery.getSelectQueryAsString(),

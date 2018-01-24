@@ -20,6 +20,7 @@ import org.apache.jena.sparql.modify.request.QuadAcc;
 import org.apache.jena.sparql.modify.request.UpdateDeleteInsert;
 import org.apache.jena.update.UpdateFactory;
 import org.apache.jena.update.UpdateRequest;
+import org.hobbit.storage.queries.SparqlQueries;
 
 /**
  * Insert Query class. Responsible for creating and storing an INSERT SPARQL
