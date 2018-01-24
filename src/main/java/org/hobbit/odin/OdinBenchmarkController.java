@@ -26,11 +26,19 @@ import org.apache.jena.rdf.model.NodeIterator;
 public class OdinBenchmarkController extends AbstractBenchmarkController {
     private static final Logger LOGGER = LoggerFactory.getLogger(OdinBenchmarkController.class);
     /* Data generator Docker image */
+<<<<<<< HEAD
     private static final String STRUCTURED_DATA_GENERATOR_CONTAINER_IMAGE = "git.project-hobbit.eu:4567/kleanthie.georgala/odindatagenerator:2.0.0";
     /* Task generator Docker image */
     private static final String STRUCTURED_TASK_GENERATOR_CONTAINER_IMAGE = "git.project-hobbit.eu:4567/kleanthie.georgala/odintaskgenerator:2.0.0";
     /* Evaluation module Docker image */
     private static final String EVALUATION_MODULE_CONTAINER_IMAGE = "git.project-hobbit.eu:4567/kleanthie.georgala/odinevaluationmodule:2.0.0";
+=======
+    private static final String STRUCTURED_DATA_GENERATOR_CONTAINER_IMAGE = "git.project-hobbit.eu:4567/kleanthie.georgala/odindatagenerator:1.0.0";
+    /* Task generator Docker image */
+    private static final String STRUCTURED_TASK_GENERATOR_CONTAINER_IMAGE = "git.project-hobbit.eu:4567/kleanthie.georgala/odintaskgenerator:1.0.0";
+    /* Evaluation module Docker image */
+    private static final String EVALUATION_MODULE_CONTAINER_IMAGE = "git.project-hobbit.eu:4567/kleanthie.georgala/odinevaluationmodule:1.0.0";
+>>>>>>> d4c6c344f104669117a6857d8d385aa9360a7abe
 
     private Semaphore minMaxTimestampMutex = new Semaphore(0);
 
