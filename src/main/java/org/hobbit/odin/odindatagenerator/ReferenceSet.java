@@ -15,6 +15,7 @@ import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.tdb.TDBFactory;
+import org.apache.log4j.Logger;
 
 /**
  * Reference Set class. Responsible for creating a Jena TDB, for updating it and
@@ -29,12 +30,13 @@ public class ReferenceSet {
     private String TDBDirectory = null;
     /* Name of the Jena Dataset */
     private Dataset dataset = null;
+    protected static final Logger logger = Logger.getLogger(ReferenceSet.class.getName());
 
     /* Constructor */
     public ReferenceSet(String directory) {
         this.TDBDirectory = directory;
         this.dataset = TDBFactory.createDataset(this.TDBDirectory);
-        
+
     }
 
     /**
@@ -83,15 +85,23 @@ public class ReferenceSet {
         ResultSet rs = null;
         try (QueryExecution qExec = QueryExecutionFactory.create(selectQuery, dataset)) {
             rs = qExec.execSelect();
-
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             ResultSetFormatter.outputAsJSON(outputStream, rs);
             try {
                 FileUtils.writeByteArrayToFile(new File(fileName), outputStream.toByteArray());
             } catch (IOException e) {
+                logger.error("Couldn't write byte array to file: " + fileName);
                 e.printStackTrace();
+                try {
+                    outputStream.close();
+                } catch (IOException e1) {
+                    logger.error("Can't close ByteArrayOutputStream");
+                    e1.printStackTrace();
+                    throw new RuntimeException();
+                }
+                throw new RuntimeException();
             }
-
+            
         } finally {
             dataset.end();
         }

@@ -81,7 +81,7 @@ public class MimickingFactory {
             break;
         default:
             logger.error("Wrong mimicking type: " + type.toString());
-            throw new IOException(type.toString());
+            throw new RuntimeException();
         }
 
         return mimickingTask;

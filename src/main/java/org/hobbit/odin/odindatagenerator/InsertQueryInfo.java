@@ -20,7 +20,7 @@ import org.apache.jena.sparql.modify.request.QuadAcc;
 import org.apache.jena.sparql.modify.request.UpdateDeleteInsert;
 import org.apache.jena.update.UpdateFactory;
 import org.apache.jena.update.UpdateRequest;
-import org.hobbit.storage.queries.SparqlQueries;
+import org.apache.log4j.Logger;
 
 /**
  * Insert Query class. Responsible for creating and storing an INSERT SPARQL
@@ -31,6 +31,8 @@ import org.hobbit.storage.queries.SparqlQueries;
  *
  */
 public class InsertQueryInfo {
+    protected static final Logger logger = Logger.getLogger(InsertQueryInfo.class.getName());
+
     /* Time stamp of executing the INSERT query */
     private long timeStamp = 0l;
     /*
@@ -116,12 +118,21 @@ public class InsertQueryInfo {
         }
         // save model for the select query
         modelFile = outputFolder + "model" + insertCounter + ".ttl";
+        OutputStream o = null;
         try {
-            OutputStream o = new FileOutputStream(modelFile);
+            o = new FileOutputStream(modelFile);
             completeModel.write(o, "ttl");
-
         } catch (FileNotFoundException e1) {
+            logger.error("Couldn't write model in " + modelFile);
             e1.printStackTrace();
+            throw new RuntimeException();
+        }
+        try {
+            o.close();
+        } catch (IOException e1) {
+            logger.error("Couldn't close file " + modelFile);
+            e1.printStackTrace();
+            throw new RuntimeException();
         }
 
         // create insert query
@@ -133,14 +144,26 @@ public class InsertQueryInfo {
         try {
             outStream = new FileOutputStream(fileName);
         } catch (FileNotFoundException e) {
+            logger.error("Couldn't find file " + fileName);
             e.printStackTrace();
+            throw new RuntimeException();
         }
+
         IndentedWriter out = new IndentedWriter(outStream);
         insertQuery.output(out);
 
+        try {
+            outStream.close();
+        } catch (IOException e) {
+            logger.error("Couldn't close file " + fileName);
+            e.printStackTrace();
+            throw new RuntimeException();
+        }
+        
         this.insertFile = fileName;
         this.modelSize = completeModel.size();
     }
+
     /**
      * Generates a SPARQL UPDATE query based on the differences between the two
      * given models. Triples that are present in the original model but not in
@@ -184,6 +207,7 @@ public class InsertQueryInfo {
 
         return update.toString(original);
     }
+
     /**
      * Reads the INSERT SPARQL query from a file and retrieves as UTF-8 encoded
      * String.
@@ -195,7 +219,10 @@ public class InsertQueryInfo {
         try {
             fileContent = FileUtils.readFileToString(new File(this.insertFile), Charsets.UTF_8);
         } catch (IOException e) {
+            logger.error("Couldn't read file " + this.insertFile);
             e.printStackTrace();
+            throw new RuntimeException();
+
         }
         return fileContent;
     }

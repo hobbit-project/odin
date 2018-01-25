@@ -106,7 +106,7 @@ public class Stream {
     public InsertQueryInfo getInsertQueryInfo(int index) {
         InsertQueryInfo insert = null;
         if (index < 0 || index >= this.insertQueries.size())
-            throw new RuntimeException("Index out of range.I can't find the INSERT query you want.");
+            throw new RuntimeException("Index out of range. I can't find the INSERT query you want.");
         else
             insert = this.insertQueries.get(index);
         return insert;

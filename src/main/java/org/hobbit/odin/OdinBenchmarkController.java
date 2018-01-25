@@ -2,7 +2,6 @@ package org.hobbit.odin;
 
 import org.hobbit.core.Commands;
 import org.hobbit.core.components.AbstractBenchmarkController;
-import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.hobbit.odin.systems.virtuoso.VirtuosoSystemAdapterConstants;
 import org.hobbit.odin.util.OdinConstants;
 import org.slf4j.Logger;
@@ -26,11 +25,13 @@ import org.apache.jena.rdf.model.NodeIterator;
 public class OdinBenchmarkController extends AbstractBenchmarkController {
     private static final Logger LOGGER = LoggerFactory.getLogger(OdinBenchmarkController.class);
     /* Data generator Docker image */
+
     private static final String STRUCTURED_DATA_GENERATOR_CONTAINER_IMAGE = "git.project-hobbit.eu:4567/kleanthie.georgala/odindatagenerator:1.0.0";
     /* Task generator Docker image */
     private static final String STRUCTURED_TASK_GENERATOR_CONTAINER_IMAGE = "git.project-hobbit.eu:4567/kleanthie.georgala/odintaskgenerator:1.0.0";
     /* Evaluation module Docker image */
     private static final String EVALUATION_MODULE_CONTAINER_IMAGE = "git.project-hobbit.eu:4567/kleanthie.georgala/odinevaluationmodule:1.0.0";
+
 
     private Semaphore minMaxTimestampMutex = new Semaphore(0);
 

@@ -33,9 +33,6 @@ public class ResultValue {
             return other.value != null;
         } else {
             if (other.value instanceof Double && value instanceof Double) {
-                /*System.out.println((0.0001d * (Double) value));
-                System.out.println(Math.abs((Double) other.value - (Double) value));
-                System.out.println("--------------");*/
                 if (Math.abs((Double) other.value - (Double) value) < (0.0001d * (Double) value)) {
                     return true;
                 } else

@@ -160,7 +160,7 @@ public class SelectQueryInfo {
         Map<Node, HashMap<Integer, ArrayList<Integer>>> resultSet = new HashMap<Node, HashMap<Integer, ArrayList<Integer>>>();
         StmtIterator it = model.listStatements();
         int quadCounter = 1;
-        
+
         while (it.hasNext()) {
             Statement statement = it.next();
             Triple triple = statement.asTriple();
@@ -220,7 +220,6 @@ public class SelectQueryInfo {
             //////////////////////////////
 
             quadCounter++;
-        
 
         }
 
@@ -306,19 +305,29 @@ public class SelectQueryInfo {
         Query q = OpAsQuery.asQuery(op); // Convert to a query
         q.addGraphURI(graphName);
         q.setQuerySelectType();
+
         // save to output
         OutputStream outStream = null;
         String fileName = outputFolder + "selectQuery" + streamCounter + ".sparql";
         try {
             outStream = new FileOutputStream(fileName);
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
             logger.error("File doesn't exist. " + fileName);
+            e.printStackTrace();
             throw new RuntimeException();
         }
+
         IndentedWriter out = new IndentedWriter(outStream);
         q.output(out);
+        out.close();
 
+        try {
+            outStream.close();
+        } catch (IOException e) {
+            logger.error("Can't close file " + fileName);
+            e.printStackTrace();
+            throw new RuntimeException();
+        }
         this.selectQueryFile = fileName;
 
     }

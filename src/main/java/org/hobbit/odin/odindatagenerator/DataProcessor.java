@@ -96,12 +96,17 @@ public class DataProcessor {
         }
         Model model = ModelFactory.createDefaultModel();
         if (file.endsWith(".ttl"))
-            model.read(file, "ttl");
+            try {
+                model.read(file, "ttl");
+            } catch (Exception e) {
+                logger.error("Couldn't read model from " + file);
+                throw new RuntimeException();
+            }
         else {
             try {
                 model.read(new FileInputStream(file), null, "N-TRIPLES");
             } catch (FileNotFoundException e) {
-                logger.error("Data file doesn't exist." + file);
+                logger.error("Couldn't read model from " + file);
                 throw new RuntimeException();
             }
         }
@@ -115,7 +120,9 @@ public class DataProcessor {
      * 
      * @param resource,
      *            the root resource
-     * @param model,
+     * @param newModel,
+     *            the new model
+     * @param oldModel,
      *            the existing model
      * 
      * @return the sub-model
@@ -148,7 +155,9 @@ public class DataProcessor {
      * 
      * @param resource,
      *            the root resource
-     * @param model,
+     * @param newModel,
+     *            the new model
+     * @param oldModel,
      *            the existing model
      * 
      * @return the sub-model
@@ -195,13 +204,13 @@ public class DataProcessor {
                 .listStatements(subject, ResourceFactory.createProperty(timeProperties[0]), (RDFNode) null).next();
 
         if (timeStampStatement == null) {
-            logger.error("Time Stamp Statement has no object.");
+            logger.error("Problem with triple: " + timeStampStatement + ". Couldn't parse object.");
             throw new RuntimeException();
         }
         for (int i = 1; i < timeProperties.length; i++) {
             RDFNode object = timeStampStatement.getObject();
             if (!object.isResource()) {
-                logger.error("Problem with time stamp property. Check your input data.");
+                logger.error("Problem with triple: " + timeStampStatement + ". Object is not a resource.");
                 throw new RuntimeException();
             }
             timeStampStatement = model.listStatements(object.asResource(),
@@ -253,6 +262,8 @@ public class DataProcessor {
                 date = df.parse(timeStamp);
             } catch (ParseException e) {
                 e.printStackTrace();
+                logger.error("Couldn't parse date: " + timeStamp);
+                throw new RuntimeException();
             }
             filesCounter.put(timeStamp, date.getTime());
         }
@@ -277,10 +288,20 @@ public class DataProcessor {
             writer = new FileOutputStream(fileName, false);
             newModel.write(writer, "ttl");
         } catch (IOException e) {
+            logger.error("Couldn't write model in : " + fileName);
             e.printStackTrace();
+            throw new RuntimeException();
         }
-
+        
         timeStamps.put(timeStamp, fileName);
+        
+        try {
+            writer.close();
+        } catch (IOException e) {
+            logger.error("Couldn't close file : " + fileName);
+            e.printStackTrace();
+            throw new RuntimeException();
+        }
 
     }
 
@@ -291,6 +312,7 @@ public class DataProcessor {
      * @param output,
      *            the output folder
      */
+    
     public void writeTimeStamps(String output) {
 
         if (timeStamps.isEmpty()) {
@@ -317,6 +339,14 @@ public class DataProcessor {
                 writer.write(date + "\t" + file + "\n");
             } catch (Exception e) {
                 e.printStackTrace();
+                logger.error("Couldn't write in " + logFile);
+                try {
+                    writer.close();
+                } catch (IOException e1) {
+                    logger.error("Couldn't close file " + logFile);
+                    throw new RuntimeException();
+                }
+                throw new RuntimeException();
             }
         }
         try {
@@ -326,6 +356,7 @@ public class DataProcessor {
             logger.error("Couldn't close file " + logFile);
             throw new RuntimeException();
         }
+        
         if (!(new File(logFile)).exists()) {
             logger.error("File " + logFile + " doesn't exist.");
             throw new RuntimeException();
@@ -370,7 +401,7 @@ public class DataProcessor {
             mainResource = statement.getSubject();
         }
         if (mainResource == null) {
-            logger.error("A statement includes no subjects of type " + classProperty);
+            logger.error("Statement " + statement.toString() + " includes no subjects of type " + classProperty);
             throw new RuntimeException();
         }
         return mainResource;
@@ -385,7 +416,7 @@ public class DataProcessor {
         // output directory of all mimicking files
         String fullNameDirectory = outputDirectory;
         File[] listOfFiles = (new File(fullNameDirectory)).listFiles();
-        
+
         if (listOfFiles.length == 0) {
             logger.error("Mimicking algorithm did not return any data files.");
             throw new RuntimeException();
