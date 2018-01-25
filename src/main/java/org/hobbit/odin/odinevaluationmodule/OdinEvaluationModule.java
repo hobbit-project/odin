@@ -464,14 +464,6 @@ public class OdinEvaluationModule extends AbstractEvaluationModule {
                     // get the resource
                     RDFNode answer = solution.get(variable);
                     binding.put(variable, new ResultValue(answer));
-                    // if (answer.isLiteral()) {
-
-                    // binding.put(variable, new
-                    // ResultValue(answer.asLiteral().getLexicalForm()));
-                    // } else {
-                    // binding.put(variable, new
-                    // ResultValue(answer.asResource().getURI()));
-                    // }
                 } else {
                     binding.put(variable, null);
                 }
@@ -577,7 +569,7 @@ public class OdinEvaluationModule extends AbstractEvaluationModule {
     @Override
     public Model summarizeEvaluation() throws Exception {
         LOGGER.info("Summary of Evaluation begins.");
-        LOGGER.info("Odin Evaluation Module has evaluated " + this.taskCounter + " tasks");
+        LOGGER.info("ODIN Evaluation Module has evaluated " + this.taskCounter + " tasks");
 
         if (this.experimentUri == null) {
             Map<String, String> env = System.getenv();

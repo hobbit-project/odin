@@ -36,7 +36,7 @@ public class ReferenceSet {
     public ReferenceSet(String directory) {
         this.TDBDirectory = directory;
         this.dataset = TDBFactory.createDataset(this.TDBDirectory);
-        
+
     }
 
     /**
@@ -87,20 +87,21 @@ public class ReferenceSet {
             rs = qExec.execSelect();
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             ResultSetFormatter.outputAsJSON(outputStream, rs);
-            logger.info(streamID+" Size of expected: "+outputStream.size());
             try {
                 FileUtils.writeByteArrayToFile(new File(fileName), outputStream.toByteArray());
             } catch (IOException e) {
+                logger.error("Couldn't write byte array to file: " + fileName);
                 e.printStackTrace();
+                try {
+                    outputStream.close();
+                } catch (IOException e1) {
+                    logger.error("Can't close ByteArrayOutputStream");
+                    e1.printStackTrace();
+                    throw new RuntimeException();
+                }
+                throw new RuntimeException();
             }
-                
             
-            try {
-                outputStream.close();
-            } catch (IOException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
         } finally {
             dataset.end();
         }

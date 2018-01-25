@@ -385,9 +385,19 @@ public class SelectQueryInfo {
             logger.error("File doesn't exist. " + fileName);
             throw new RuntimeException();
         }
+        
         IndentedWriter out = new IndentedWriter(outStream);
         q.output(out);
-
+        out.close();
+        
+        try {
+            outStream.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+            logger.error("Couldn't close " + fileName);
+            throw new RuntimeException();
+        }
+        
         this.selectQueryFile = fileName;
 
     }
@@ -744,7 +754,6 @@ public class SelectQueryInfo {
     public void createSelectQuery(ArrayList<InsertQueryInfo> insertQueries, String outputFolder, int streamCounter,
             String graphName) {
 
-        logger.info("Creating SELECT query for stream no."+streamCounter);
         outputFolder = outputFolder + "selectQueries/";
         File newFolder = new File(outputFolder);
         if (!newFolder.exists())
@@ -757,7 +766,6 @@ public class SelectQueryInfo {
             tempModel.read(fileName);
             model.add(tempModel);
         }
-        logger.info("Stream no."+streamCounter+". Model size: "+model.size());
         createSets(model);
 
         Op op = null;
@@ -825,19 +833,22 @@ public class SelectQueryInfo {
         try {
             outStream = new FileOutputStream(fileName);
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
             logger.error("File doesn't exist. " + fileName);
+            e.printStackTrace();
             throw new RuntimeException();
         }
+
+        IndentedWriter out = new IndentedWriter(outStream);
+        q.output(out);
+        out.close();
+        
         try {
             outStream.close();
         } catch (IOException e) {
-            // TODO Auto-generated catch block
+            logger.error("Can't close file " + fileName);
             e.printStackTrace();
+            throw new RuntimeException();
         }
-        IndentedWriter out = new IndentedWriter(outStream);
-        q.output(out);
-
         this.selectQueryFile = fileName;
 
     }

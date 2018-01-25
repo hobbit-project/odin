@@ -198,6 +198,8 @@ public class OdinDataGenerator extends AbstractDataGenerator {
                     sendDataToSystemAdapter(data);
                 } catch (IOException e) {
                     e.printStackTrace();
+                    LOGGER.error("Couldn't send data to system adapter.");
+                    throw new RuntimeException();
                 }
             }
         }
@@ -254,6 +256,8 @@ public class OdinDataGenerator extends AbstractDataGenerator {
                     sendDataToTaskGenerator(getTask());
                 } catch (IOException e) {
                     e.printStackTrace();
+                    LOGGER.error("Couldn't send data to task generator.");
+                    throw new RuntimeException();
                 }
             }
 
@@ -313,6 +317,8 @@ public class OdinDataGenerator extends AbstractDataGenerator {
                     throw new IOException("Failed to create new directory: " + getDATA_GENERATOR_OUTPUT_DATASET());
                 } catch (IOException e) {
                     e.printStackTrace();
+                    LOGGER.error("Failed to create new directory: " + getDATA_GENERATOR_OUTPUT_DATASET());
+                    throw new RuntimeException();
                 }
             }
         }
@@ -328,6 +334,8 @@ public class OdinDataGenerator extends AbstractDataGenerator {
                     throw new IOException("Failed to create new directory: " + getDATA_GENERATOR_OUTPUT_DATASET());
                 } catch (IOException e) {
                     e.printStackTrace();
+                    LOGGER.error("Failed to create new directory: " + getDATA_GENERATOR_OUTPUT_DATASET());
+                    throw new RuntimeException();
                 }
             }
         }
@@ -354,14 +362,14 @@ public class OdinDataGenerator extends AbstractDataGenerator {
         /* mimicking population */
         if (!env.containsKey(OdinConstants.GENERATOR_POPULATION)) {
             LOGGER.error("Couldn't get \"" + OdinConstants.GENERATOR_POPULATION + "\" from the properties. Aborting.");
-            System.exit(1);
+            throw new RuntimeException();
         }
         setDATA_GENERATOR_POPULATION(env.get(OdinConstants.GENERATOR_POPULATION));
 
         /* name of mimicking algorithm */
         if (!env.containsKey(OdinConstants.GENERATOR_DATASET)) {
             LOGGER.error("Couldn't get \"" + OdinConstants.GENERATOR_DATASET + "\" from the properties. Aborting.");
-            System.exit(1);
+            throw new RuntimeException();
         }
         setDATA_GENERATOR_DATASET_NAME(env.get(OdinConstants.GENERATOR_DATASET));
 
@@ -370,7 +378,7 @@ public class OdinDataGenerator extends AbstractDataGenerator {
         if (!env.containsKey(OdinConstants.GENERATOR_INSERT_QUERIES_COUNT)) {
             LOGGER.error("Couldn't get \"" + OdinConstants.GENERATOR_INSERT_QUERIES_COUNT
                     + "\" from the properties. Aborting.");
-            System.exit(1);
+            throw new RuntimeException();
         }
         setDATA_GENERATOR_INSERT_QUERIES(Integer.parseInt(env.get(OdinConstants.GENERATOR_INSERT_QUERIES_COUNT)));
 
@@ -378,7 +386,7 @@ public class OdinDataGenerator extends AbstractDataGenerator {
         if (!env.containsKey(OdinConstants.GENERATOR_BENCHMARK_DURATION)) {
             LOGGER.error("Couldn't get \"" + OdinConstants.GENERATOR_BENCHMARK_DURATION
                     + "\" from the properties. Aborting.");
-            System.exit(1);
+            throw new RuntimeException();
         }
         setBenchmarkEndPoint(Long.parseLong(env.get(OdinConstants.GENERATOR_BENCHMARK_DURATION)));
 
@@ -386,7 +394,7 @@ public class OdinDataGenerator extends AbstractDataGenerator {
         if (!env.containsKey(OdinConstants.GENERATOR_MIMICKING_OUTPUT)) {
             LOGGER.error(
                     "Couldn't get \"" + OdinConstants.GENERATOR_MIMICKING_OUTPUT + "\" from the properties. Aborting.");
-            System.exit(1);
+            throw new RuntimeException();
         }
         this.createOutputDirectory(env.get(OdinConstants.GENERATOR_MIMICKING_OUTPUT));
 
@@ -442,8 +450,12 @@ public class OdinDataGenerator extends AbstractDataGenerator {
                 }
             } catch (IOException e) {
                 e.printStackTrace(); // or log it, or otherwise handle it
+                LOGGER.error("Couldn't parse output of TWIG");
+                throw new RuntimeException();
             } catch (InterruptedException ie) {
                 ie.printStackTrace(); // or log it, or otherwise handle it
+                LOGGER.error("waitFor() was interrupted");
+                throw new RuntimeException();
             }
             break;
         case TRANSPORT_DATA:
@@ -607,6 +619,7 @@ public class OdinDataGenerator extends AbstractDataGenerator {
                 selectQuery.setTimeStamp(selectQueryTS);
                 // create the select query given the last insert query of the
                 // current batch
+
                 selectQuery.createSelectQuery(lastInsertQuery.getModelFile(), getDATA_GENERATOR_OUTPUT_DATASET(),
                         streamID, defaultGraph);
                 // create a reference set for this select query
@@ -623,7 +636,6 @@ public class OdinDataGenerator extends AbstractDataGenerator {
 
             }
             if ((iCounter % getDATA_GENERATOR_INSERT_QUERIES()) == 0) {
-                LOGGER.info("Creating stream no."+streamID);
                 streamID++;
             }
 
@@ -679,14 +691,17 @@ public class OdinDataGenerator extends AbstractDataGenerator {
                     dataRow = TSVFile.readLine();
                 } catch (IOException | ParseException e) {
                     e.printStackTrace();
-                    LOGGER.error("IOException or ParseException");
+                    if(e instanceof ParseException)
+                        LOGGER.error("Couldn't parse date in " + dataRow);
+                    else
+                        LOGGER.error("Couldn't read next line ");
                     TSVFile.close();
                     throw new RuntimeException();
                 }
             }
         } catch (IOException e) {
             e.printStackTrace();
-            LOGGER.error("IOException");
+            LOGGER.error("IOException for " + getDATA_GENERATOR_OUTPUT_DATASET() + "timeStamps.tsv");
             throw new RuntimeException();
         }
 
@@ -694,7 +709,7 @@ public class OdinDataGenerator extends AbstractDataGenerator {
             TSVFile.close();
         } catch (IOException e) {
             e.printStackTrace();
-            LOGGER.error("Can't close file " + getDATA_GENERATOR_OUTPUT_DATASET() + "timeStamps.tsv");
+            LOGGER.error("Couldn't close file " + getDATA_GENERATOR_OUTPUT_DATASET() + "timeStamps.tsv");
             throw new RuntimeException();
 
         }
@@ -765,10 +780,8 @@ public class OdinDataGenerator extends AbstractDataGenerator {
         this.task = task;
     }
 
-    
-
     public void setDefaultGraph(String string) {
         this.defaultGraph = string;
-        
+
     }
 }

@@ -46,7 +46,6 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
     private AtomicInteger totalReceived = new AtomicInteger(0);
     private AtomicInteger totalSent = new AtomicInteger(0);
 
-    
     private boolean phase2 = true;
 
     List<String> graphUris = new ArrayList<String>();
@@ -113,14 +112,14 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
 
             Thread thread = new Thread() {
                 public void run() {
-                    
+
                     ByteBuffer buffer = ByteBuffer.wrap(data);
                     int numberOfMessages = buffer.getInt();
                     boolean lastBulkLoad = buffer.get() != 0;
-                    
+
                     int messagesSent = totalSent.addAndGet(numberOfMessages);
                     int messagesReceived = totalReceived.get();
-                    
+
                     while (messagesSent != messagesReceived) {
                         LOGGER.info("Messages received and sent are not equal");
                         try {
@@ -139,11 +138,13 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
                         UpdateRequest updateRequest = UpdateRequestUtils.parse(create);
                         updateExecFactory.createUpdateProcessor(updateRequest).execute();
                     }
-                    
+
                     try {
                         sendToCmdQueue(VirtuosoSystemAdapterConstants.BULK_LOADING_DATA_FINISHED);
                     } catch (IOException e) {
                         e.printStackTrace();
+                        LOGGER.error("Couldn't send signal to BenchmarkController that bulk phase is over");
+                        throw new RuntimeException();
                     }
                     LOGGER.info("Bulk phase is over.");
                 }
@@ -151,7 +152,7 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
 
             thread.start();
             phase2 = false;
-            
+
         }
         super.receiveCommand(command, data);
     }
@@ -178,6 +179,8 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
                 updateExecFactory.createUpdateProcessor(updateRequest).execute();
             } catch (Exception e) {
                 e.printStackTrace();
+                LOGGER.error("Couldn't execute " + updateRequest.toString());
+                throw new RuntimeException();
             }
 
             LOGGER.info("INSERT SPARQL query has been processed.");
@@ -198,22 +201,33 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
         // Create a QueryExecution object from a query string ...
         QueryExecution qe = queryExecFactory.createQueryExecution(selectQuery);
         // and run it.
+
+        ResultSet results = qe.execSelect();
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        ResultSetFormatter.outputAsJSON(outputStream, results);
+        
         try {
-            ResultSet results = qe.execSelect();
-            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-            ResultSetFormatter.outputAsJSON(outputStream, results);
-
+            this.sendResultToEvalStorage(taskId, outputStream.toByteArray());
+        } catch (IOException e) {
+            LOGGER.error("Got an exception while sending results to evaluation storage.", e);
             try {
-                this.sendResultToEvalStorage(taskId, outputStream.toByteArray());
-            } catch (IOException e) {
-                LOGGER.error("Got an exception while sending results.", e);
+                outputStream.close();
+            } catch (IOException e1) {
+                e1.printStackTrace();
+                LOGGER.error("Couldn't close ByteArrayOutputStream");
+                throw new RuntimeException();
             }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            qe.close();
+            throw new RuntimeException();
         }
+        try {
+            outputStream.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+            LOGGER.error("Couldn't close ByteArrayOutputStream");
+            throw new RuntimeException();
+        }
+        qe.close();
+
         LOGGER.info("SELECT SPARQL query has been processed.");
         this.selectsProcessed++;
 
