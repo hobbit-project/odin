@@ -804,7 +804,7 @@ public class OdinEvaluationModule extends AbstractEvaluationModule {
                     obs.addProperty(RDF.type, finalModel.createResource(DataSetStructure.observation));
 
                     // qb:dataSet bench:overallEvaluation1Recall ;
-                    obs.addProperty(finalModel.createProperty(DataSetStructure.dataset), eval);
+                    obs.addProperty(finalModel.createProperty("http://purl.org/linked-data/cube#dataSet"), eval);
 
                     // bench:taskID
                     // "1"^^http://www.w3.org/2001/XMLSchema#unsignedInt ;
