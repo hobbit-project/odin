@@ -167,7 +167,7 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
             graphUris.add(graphUri);
             this.totalReceived.incrementAndGet();
         } else {
-            LOGGER.info("INSERT SPARQL query received.");
+            //LOGGER.info("INSERT SPARQL query received.");
             this.insertsReceived++;
             ByteBuffer buffer = ByteBuffer.wrap(arg0);
             // read the insert query
@@ -180,10 +180,11 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
             } catch (Exception e) {
                 e.printStackTrace();
                 LOGGER.error("Couldn't execute " + updateRequest.toString());
+                LOGGER.error("Couldn't execute " + insertQuery);
                 throw new RuntimeException();
             }
 
-            LOGGER.info("INSERT SPARQL query has been processed.");
+            //LOGGER.info("INSERT SPARQL query has been processed.");
             this.insertsProcessed++;
         }
 
@@ -191,7 +192,7 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
 
     @Override
     public void receiveGeneratedTask(String arg0, byte[] arg1) {
-        LOGGER.info("SELECT SPARQL query received.");
+        //LOGGER.info("SELECT SPARQL query received.");
         this.selectsReceived++;
         String taskId = arg0;
         // read select query
@@ -228,7 +229,7 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
         }
         qe.close();
 
-        LOGGER.info("SELECT SPARQL query has been processed.");
+        //LOGGER.info("SELECT SPARQL query has been processed.");
         this.selectsProcessed++;
 
     }
@@ -236,10 +237,10 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
     @Override
     public void close() throws IOException {
         if (this.insertsProcessed != this.insertsReceived) {
-            LOGGER.error("INSERT queries received and processed are not equal");
+            LOGGER.error("INSERT queries received and processed are not equal:"+this.insertsProcessed+" "+this.insertsReceived);
         }
         if (this.selectsProcessed != this.selectsReceived) {
-            LOGGER.error("SELECT queries received and processed are not equal");
+            LOGGER.error("SELECT queries received and processed are not equal:"+this.selectsProcessed+" "+this.selectsReceived);
         }
 
         try {

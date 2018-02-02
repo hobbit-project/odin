@@ -4,6 +4,8 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
 import org.hobbit.odin.odindatagenerator.InsertQueryInfo;
@@ -49,9 +51,31 @@ public class SelectQueryInfoTest {
                 System.getProperty("user.dir") + "/src/test/resources/data/debug_data/selectQuery2/", 1,
                 "http://www.virtuoso-graph.com/");
 
+        
         assertTrue(selectQueryInfo.getSelectQueryAsString() != null);
         assertTrue(selectQueryInfo.getSelectQueryAsString().indexOf("FROM") != -1);
 
     }
 
+    //@Test
+    public void intersection() {
+        Set<Integer> intersection = new HashSet<Integer>();
+        intersection.add(1);
+        intersection.add(2);
+        intersection.add(3);
+        intersection.add(4);
+        intersection.add(5);
+        
+        Set<Integer> ids = new HashSet<Integer>();
+        ids.add(7);
+        ids.add(8);
+        ids.add(9);
+        
+        intersection.retainAll(ids);
+        System.out.println(intersection);
+        
+        
+        assertTrue(intersection.isEmpty());
+
+    }
 }

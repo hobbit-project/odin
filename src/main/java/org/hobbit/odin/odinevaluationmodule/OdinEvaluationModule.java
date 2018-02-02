@@ -784,6 +784,7 @@ public class OdinEvaluationModule extends AbstractEvaluationModule {
         for (Entry<Long, ArrayList<TaskEvaluation>> cell : getTasks().entrySet()) {
 
             for (TaskEvaluation task : cell.getValue()) {
+                
                 // for each task, get all kpis
                 DataSetStructure[] KPIs = DataSetStructure.class.getEnumConstants();
 

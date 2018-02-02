@@ -32,7 +32,6 @@ public class OdinBenchmarkController extends AbstractBenchmarkController {
     /* Evaluation module Docker image */
     private static final String EVALUATION_MODULE_CONTAINER_IMAGE = "git.project-hobbit.eu:4567/kleanthie.georgala/odinevaluationmodule:2.0.0";
 
-
     private Semaphore minMaxTimestampMutex = new Semaphore(0);
 
     private Semaphore bulkLoadMutex = new Semaphore(0);
@@ -223,7 +222,8 @@ public class OdinBenchmarkController extends AbstractBenchmarkController {
 
         createTaskGenerators(STRUCTURED_TASK_GENERATOR_CONTAINER_IMAGE, numberOfTaskGenerators, new String[] {});
 
-        createEvaluationStorage();
+        createEvaluationStorage("git.project-hobbit.eu:4567/defaulthobbituser/defaultevaluationstorage:1.0.7-SNAPSHOT",
+                new String[] {});
         /////////////////////////////////////////////////////////////////////////
         // get KPIs for evaluation module
         this.envVariablesEvaluationModule = new String[] {

@@ -6,8 +6,14 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeSet;
@@ -15,8 +21,6 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.Path;
 
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.jena.atlas.io.IndentedWriter;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
@@ -30,6 +34,7 @@ import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.OpAsQuery;
 import org.apache.jena.sparql.algebra.op.OpBGP;
+import org.apache.jena.sparql.algebra.op.OpUnion;
 import org.apache.jena.sparql.core.BasicPattern;
 import org.apache.jena.sparql.core.Var;
 import org.apache.log4j.Logger;
@@ -44,38 +49,6 @@ import org.apache.log4j.Logger;
  */
 
 public class SelectQueryInfo {
-
-    public HashMap<Integer, Pair<Triple, Node>> getSubjectTPs() {
-        return subjectTPs;
-    }
-
-    public void setSubjectTPs(HashMap<Integer, Pair<Triple, Node>> subjectTPs) {
-        this.subjectTPs = subjectTPs;
-    }
-
-    public HashMap<Integer, Pair<Triple, Node>> getPredicateTPs() {
-        return predicateTPs;
-    }
-
-    public void setPredicateTPs(HashMap<Integer, Pair<Triple, Node>> predicateTPs) {
-        this.predicateTPs = predicateTPs;
-    }
-
-    public HashMap<Integer, Pair<Triple, Node>> getObjectTPs() {
-        return objectTPs;
-    }
-
-    public void setObjectTPs(HashMap<Integer, Pair<Triple, Node>> objectTPs) {
-        this.objectTPs = objectTPs;
-    }
-
-    public int getQuadCounter() {
-        return quadCounter;
-    }
-
-    public void setQuadCounter(int quadCounter) {
-        this.quadCounter = quadCounter;
-    }
 
     public Set<Integer> getTriplesCovered() {
         return triplesCovered;
@@ -102,10 +75,10 @@ public class SelectQueryInfo {
     }
 
     protected static final Logger logger = Logger.getLogger(SelectQueryInfo.class.getName());
-    HashMap<Integer, Pair<Triple, Node>> subjectTPs = new HashMap<Integer, Pair<Triple, Node>>();
-    HashMap<Integer, Pair<Triple, Node>> predicateTPs = new HashMap<Integer, Pair<Triple, Node>>();
-    HashMap<Integer, Pair<Triple, Node>> objectTPs = new HashMap<Integer, Pair<Triple, Node>>();
-    int quadCounter = 0;
+
+    HashMap<Triple, HashMap<Integer, Node>> tps = new HashMap<Triple, HashMap<Integer, Node>>();
+
+    HashSet<Integer> quadCounter = new HashSet<Integer>();
     Set<Integer> triplesCovered = new TreeSet<Integer>();
     int variableCounter = 0;
     HashMap<String, HashSet<Node>> variables = new HashMap<String, HashSet<Node>>();
@@ -187,7 +160,6 @@ public class SelectQueryInfo {
         return data;
     }
 
-
     /**
      * Iterates over the statements of a model and creates all possible triple
      * patterns with one variable. Then, it places each TP into 3 subsets: (i)
@@ -201,11 +173,11 @@ public class SelectQueryInfo {
      *            the model that includes the statements to be transformed into
      *            triple patterns
      */
-    public void createSets(Model model) {
+    public void createTriplePatterns(Model model) {
         StmtIterator it = model.listStatements();
-
+        int counter = 0;
         while (it.hasNext()) {
-            quadCounter++;
+            counter++;
             Statement statement = it.next();
             Triple triple = statement.asTriple();
             Node subject = triple.getSubject();
@@ -218,132 +190,40 @@ public class SelectQueryInfo {
             // for subject:
             Node subjectVariable = NodeFactory.createVariable("?");
             newTriple = new Triple(subjectVariable, predicate, object);
-            subjectTPs.put(quadCounter, new ImmutablePair<Triple, Node>(newTriple, subject));
+
+            if (!tps.containsKey(newTriple)) {
+                tps.put(newTriple, new HashMap<Integer, Node>());
+            }
+            HashMap<Integer, Node> temp = tps.get(newTriple);
+            temp.put(counter, subject);
+            tps.put(newTriple, temp);
             //////////////////////////////
             // for predicate:
             Node predicateVariable = NodeFactory.createVariable("?");
             newTriple = new Triple(subject, predicateVariable, object);
-            predicateTPs.put(quadCounter, new ImmutablePair<Triple, Node>(newTriple, predicate));
+
+            if (!tps.containsKey(newTriple)) {
+                tps.put(newTriple, new HashMap<Integer, Node>());
+            }
+            temp = tps.get(newTriple);
+            temp.put(counter, predicate);
+            tps.put(newTriple, temp);
             //////////////////////////////
             // for object:
             Node objectVariable = NodeFactory.createVariable("?");
             newTriple = new Triple(subject, predicate, objectVariable);
-            objectTPs.put(quadCounter, new ImmutablePair<Triple, Node>(newTriple, object));
+
+            if (!tps.containsKey(newTriple)) {
+                tps.put(newTriple, new HashMap<Integer, Node>());
+            }
+            temp = tps.get(newTriple);
+            temp.put(counter, object);
+            tps.put(newTriple, temp);
             //////////////////////////////
+            this.quadCounter.add(counter);
 
         }
 
-    }
-
-    /**
-     * Creates a map of triples ids and their corresponding subject given the
-     * subject of a triple. It identifies other triples with the same predicate
-     * and object as the initial triple and stores the id number of the triple
-     * and its subject into a map.
-     * 
-     * @param i,
-     *            the id number of the triple
-     * @return the set of matching triples id and their subject
-     */
-    public HashMap<Integer, Pair<Triple, Node>> createSubjectSet(int i) {
-        HashMap<Integer, Pair<Triple, Node>> subjects = new HashMap<Integer, Pair<Triple, Node>>();
-        Pair<Triple, Node> tp1 = subjectTPs.get(i);
-
-        Node predicate1 = tp1.getLeft().getPredicate();
-        Node object1 = tp1.getLeft().getObject();
-
-        for (Entry<Integer, Pair<Triple, Node>> entry : subjectTPs.entrySet()) {
-            int j = entry.getKey();
-            if (i == j)
-                continue;
-            if (triplesCovered.contains(j))
-                continue;
-
-            // compare non-variable parts
-            Pair<Triple, Node> tp2 = entry.getValue();
-            Node predicate2 = tp2.getLeft().getPredicate();
-            Node object2 = tp2.getLeft().getObject();
-
-            if (predicate1.equals(predicate2) && object1.equals(object2)) {
-                subjects.put(j, tp2);
-            }
-
-        }
-        return subjects;
-    }
-
-    /**
-     * Creates a map of triples ids and their corresponding predicate given the
-     * predicate of a triple. It identifies other triples with the same subject
-     * and object as the initial triple and stores the id number of the triple
-     * and its predicate into a map.
-     * 
-     * @param i,
-     *            the id number of the triple
-     * @return the set of matching triples id and their predicate
-     */
-    public HashMap<Integer, Pair<Triple, Node>> createPredicateSet(int i) {
-
-        HashMap<Integer, Pair<Triple, Node>> predicates = new HashMap<Integer, Pair<Triple, Node>>();
-        Pair<Triple, Node> tp1 = predicateTPs.get(i);
-        Node subject1 = tp1.getLeft().getSubject();
-        Node object1 = tp1.getLeft().getObject();
-
-        for (Entry<Integer, Pair<Triple, Node>> entry : predicateTPs.entrySet()) {
-            int j = entry.getKey();
-            if (i == j)
-                continue;
-            if (triplesCovered.contains(j))
-                continue;
-
-            // compare non-variable parts
-            Pair<Triple, Node> tp2 = entry.getValue();
-            Node subject2 = tp2.getLeft().getSubject();
-            Node object2 = tp2.getLeft().getObject();
-
-            if (subject1.equals(subject2) && object1.equals(object2)) {
-                predicates.put(j, tp2);
-            }
-
-        }
-        return predicates;
-    }
-
-    /**
-     * Creates a map of triples ids and their corresponding object given the
-     * object of a triple. It identifies other triples with the same subject and
-     * predicate as the initial triple and stores the id number of the triple
-     * and its object into a map.
-     * 
-     * @param i,
-     *            the id number of the triple
-     * @return the set of matching triples id and their object
-     */
-    public HashMap<Integer, Pair<Triple, Node>> createObjectSet(int i) {
-
-        HashMap<Integer, Pair<Triple, Node>> objects = new HashMap<Integer, Pair<Triple, Node>>();
-        Pair<Triple, Node> tp1 = objectTPs.get(i);
-        Node subject1 = tp1.getLeft().getSubject();
-        Node predicate1 = tp1.getLeft().getPredicate();
-
-        for (Entry<Integer, Pair<Triple, Node>> entry : predicateTPs.entrySet()) {
-            int j = entry.getKey();
-            if (i == j)
-                continue;
-            if (triplesCovered.contains(j))
-                continue;
-
-            // compare non-variable parts
-            Pair<Triple, Node> tp2 = entry.getValue();
-            Node subject2 = tp2.getLeft().getSubject();
-            Node predicate2 = tp2.getLeft().getPredicate();
-
-            if (subject1.equals(subject2) && predicate1.equals(predicate2)) {
-                objects.put(j, tp2);
-            }
-
-        }
-        return objects;
     }
 
     /**
@@ -357,40 +237,39 @@ public class SelectQueryInfo {
      *            the id number of the triple
      * @return the merged triple
      */
-    public Triple mergeSubjectTPs(HashMap<Integer, Pair<Triple, Node>> subjects, int i) {
-        Pair<Triple, Node> tp1 = subjectTPs.get(i);
+    public Triple createSubjectPattern(Triple triple, HashMap<Integer, Node> list) {
 
-        Node predicate1 = tp1.getLeft().getPredicate();
-        Node object1 = tp1.getLeft().getObject();
+        HashSet<Integer> ids = new HashSet<Integer>(list.keySet());
+        Set<Integer> intersection = new HashSet<Integer>(this.triplesCovered);
+        intersection.retainAll(ids);
 
-        // get answer set for the variable
-        Node answerSubject = tp1.getRight();
-        HashSet<Node> answers = new HashSet<Node>();
-        answers.add(answerSubject);
-        for (Pair<Triple, Node> pair : subjects.values()) {
-            answers.add(pair.getRight());
-        }
+        // all new triples
+        if (intersection.isEmpty()) {
+            HashSet<Node> answers = new HashSet<Node>(list.values());
 
-        String var = null;
-        if (!variables.containsValue(answers)) {
-            variables.put("x" + variableCounter, answers);
-            this.variableCounter++;
-        }
-        for (Entry<String, HashSet<Node>> entry : variables.entrySet()) {
-            HashSet<Node> tempAnswers = entry.getValue();
-            if (tempAnswers.equals(answers)) {
-                var = entry.getKey();
-                break;
+            String var = null;
+            if (!variables.containsValue(answers)) {
+                variables.put("x" + variableCounter, answers);
+                this.variableCounter++;
             }
+            for (Entry<String, HashSet<Node>> entry : variables.entrySet()) {
+                HashSet<Node> tempAnswers = entry.getValue();
+                if (tempAnswers.equals(answers)) {
+                    var = entry.getKey();
+                    break;
+                }
+            }
+
+            Triple newPattern = Triple.create(Var.alloc(var), triple.getPredicate(), triple.getObject());
+            this.triplesCovered.addAll(list.keySet());
+            return newPattern;
+        } else {
+            // all triples are covered
+            // or
+            // there is some overlap
+            return null;
         }
 
-        Triple newPattern = Triple.create(Var.alloc(var), predicate1, object1);
-
-        Set<Integer> keys = subjects.keySet();
-        this.triplesCovered.addAll(keys);
-        this.triplesCovered.add(i);
-
-        return newPattern;
     }
 
     /**
@@ -404,40 +283,38 @@ public class SelectQueryInfo {
      *            the id number of the triple
      * @return the merged triple
      */
-    public Triple mergePredicateTPs(HashMap<Integer, Pair<Triple, Node>> predicates, int i) {
+    public Triple createPredicatePattern(Triple triple, HashMap<Integer, Node> list) {
 
-        Pair<Triple, Node> tp1 = predicateTPs.get(i);
+        HashSet<Integer> ids = new HashSet<Integer>(list.keySet());
+        Set<Integer> intersection = new HashSet<Integer>(this.triplesCovered);
+        intersection.retainAll(ids);
 
-        Node subject1 = tp1.getLeft().getSubject();
-        Node object1 = tp1.getLeft().getObject();
+        // all new triples
+        if (intersection.isEmpty()) {
+            HashSet<Node> answers = new HashSet<Node>(list.values());
 
-        Node answerPredicate = tp1.getRight();
-        HashSet<Node> answers = new HashSet<Node>();
-        answers.add(answerPredicate);
-        for (Pair<Triple, Node> pair : predicates.values()) {
-            answers.add(pair.getRight());
-        }
-
-        String var = null;
-        if (!variables.containsValue(answers)) {
-            variables.put("x" + variableCounter, answers);
-            this.variableCounter++;
-        }
-        for (Entry<String, HashSet<Node>> entry : variables.entrySet()) {
-            HashSet<Node> tempAnswers = entry.getValue();
-            if (tempAnswers.equals(answers)) {
-                var = entry.getKey();
-                break;
+            String var = null;
+            if (!variables.containsValue(answers)) {
+                variables.put("x" + variableCounter, answers);
+                this.variableCounter++;
             }
+            for (Entry<String, HashSet<Node>> entry : variables.entrySet()) {
+                HashSet<Node> tempAnswers = entry.getValue();
+                if (tempAnswers.equals(answers)) {
+                    var = entry.getKey();
+                    break;
+                }
+            }
+
+            Triple newPattern = Triple.create(triple.getSubject(), Var.alloc(var), triple.getObject());
+            this.triplesCovered.addAll(list.keySet());
+            return newPattern;
+        } else {
+            // all triples are covered
+            // or
+            // there is some overlap
+            return null;
         }
-
-        Triple newPattern = Triple.create(subject1, Var.alloc(var), object1);
-
-        Set<Integer> keys = predicates.keySet();
-        this.triplesCovered.addAll(keys);
-        this.triplesCovered.add(i);
-
-        return newPattern;
 
     }
 
@@ -452,41 +329,64 @@ public class SelectQueryInfo {
      *            the id number of the triple
      * @return the merged triple
      */
-    public Triple mergeObjectTPs(HashMap<Integer, Pair<Triple, Node>> objects, int i) {
+    public Triple createObjectPattern(Triple triple, HashMap<Integer, Node> list) {
 
-        Pair<Triple, Node> tp1 = objectTPs.get(i);
+        HashSet<Integer> ids = new HashSet<Integer>(list.keySet());
+        Set<Integer> intersection = new HashSet<Integer>(this.triplesCovered);
+        intersection.retainAll(ids);
 
-        Node subject1 = tp1.getLeft().getSubject();
-        Node predicate1 = tp1.getLeft().getPredicate();
+        // all new triples
+        if (intersection.isEmpty()) {
+            HashSet<Node> answers = new HashSet<Node>(list.values());
 
-        Node objectPredicate = tp1.getRight();
-
-        HashSet<Node> answers = new HashSet<Node>();
-        answers.add(objectPredicate);
-        for (Pair<Triple, Node> pair : objects.values()) {
-            answers.add(pair.getRight());
-        }
-
-        String var = null;
-        if (!variables.containsValue(answers)) {
-            variables.put("x" + variableCounter, answers);
-            this.variableCounter++;
-        }
-        for (Entry<String, HashSet<Node>> entry : variables.entrySet()) {
-            HashSet<Node> tempAnswers = entry.getValue();
-            if (tempAnswers.equals(answers)) {
-                var = entry.getKey();
-                break;
+            String var = null;
+            if (!variables.containsValue(answers)) {
+                variables.put("x" + variableCounter, answers);
+                this.variableCounter++;
             }
+            for (Entry<String, HashSet<Node>> entry : variables.entrySet()) {
+                HashSet<Node> tempAnswers = entry.getValue();
+                if (tempAnswers.equals(answers)) {
+                    var = entry.getKey();
+                    break;
+                }
+            }
+
+            Triple newPattern = Triple.create(triple.getSubject(), triple.getPredicate(), Var.alloc(var));
+            this.triplesCovered.addAll(list.keySet());
+            return newPattern;
+        } else {
+            // all triples are covered
+            // or
+            // there is some overlap
+            return null;
         }
-        Triple newPattern = Triple.create(subject1, predicate1, Var.alloc(var));
 
-        Set<Integer> keys = objects.keySet();
-        this.triplesCovered.addAll(keys);
-        this.triplesCovered.add(i);
+    }
 
-        return newPattern;
+    private Map<Triple, HashMap<Integer, Node>> sortBySizeOfValues() {
 
+        List<Entry<Triple, HashMap<Integer, Node>>> list = new LinkedList<Entry<Triple, HashMap<Integer, Node>>>(
+                tps.entrySet());
+
+        // Sorting the list based on values
+        Collections.sort(list, new Comparator<Entry<Triple, HashMap<Integer, Node>>>() {
+            public int compare(Entry<Triple, HashMap<Integer, Node>> o1, Entry<Triple, HashMap<Integer, Node>> o2) {
+                HashMap<Integer, Node> list1 = o1.getValue();
+                HashMap<Integer, Node> list2 = o2.getValue();
+                Integer length1 = list1.size();
+                Integer length2 = list2.size();
+                return length2.compareTo(length1);
+            }
+        });
+
+        // Maintaining insertion order with the help of LinkedList
+        Map<Triple, HashMap<Integer, Node>> sortedMap = new LinkedHashMap<Triple, HashMap<Integer, Node>>();
+        for (Entry<Triple, HashMap<Integer, Node>> entry : list) {
+            sortedMap.put(entry.getKey(), entry.getValue());
+        }
+
+        return sortedMap;
     }
 
     /**
@@ -536,7 +436,7 @@ public class SelectQueryInfo {
      *            the name of the graph that the select query will be performed
      *            against
      */
-
+    //TODO: minimize query
     public void createSelectQuery(ArrayList<InsertQueryInfo> insertQueries, String outputFolder, int streamCounter,
             String graphName) {
 
@@ -552,63 +452,73 @@ public class SelectQueryInfo {
             tempModel.read(fileName);
             model.add(tempModel);
         }
-        createSets(model);
+
+        //logger.info("Size of model: " + model.size());
+        //logger.info("Read all files");
+        createTriplePatterns(model);
+        //logger.info("Created triple patterns");
+
+        Map<Triple, HashMap<Integer, Node>> sortedTps = sortBySizeOfValues();
 
         Op op = null;
-        BasicPattern pat = new BasicPattern();
+        LinkedHashMap<Node, HashSet<Triple>> triples = new LinkedHashMap<Node, HashSet<Triple>>();
 
-        for (int i = 1; i <= quadCounter; i++) {
-            if (triplesCovered.contains(i))
-                continue;
+        for (Map.Entry<Triple, HashMap<Integer, Node>> entry : sortedTps.entrySet()) {
 
-            HashMap<Integer, Pair<Triple, Node>> subjects = createSubjectSet(i);
-            HashMap<Integer, Pair<Triple, Node>> predicates = createPredicateSet(i);
-            HashMap<Integer, Pair<Triple, Node>> objects = createObjectSet(i);
+            Triple key = entry.getKey();
+            HashMap<Integer, Node> value = entry.getValue();
 
-            Triple newPattern = null;
-
-            if (subjects.size() == 0 && predicates.size() == 0 && objects.size() == 0) {
-                Pair<Triple, Node> tp1 = subjectTPs.get(i);
-
-                Node predicate1 = tp1.getLeft().getPredicate();
-                Node object1 = tp1.getLeft().getObject();
-
-                Node answerSubject = tp1.getRight();
-                HashSet<Node> answers = new HashSet<Node>();
-                answers.add(answerSubject);
-
-                String var = null;
-                if (!variables.containsValue(answers)) {
-                    variables.put("x" + variableCounter, answers);
-                    this.variableCounter++;
-                }
-                for (Entry<String, HashSet<Node>> entry : variables.entrySet()) {
-                    HashSet<Node> tempAnswers = entry.getValue();
-                    if (tempAnswers.equals(answers)) {
-                        var = entry.getKey();
-                        break;
+            if (key.getSubject().isVariable()) {
+                Triple newPattern = this.createSubjectPattern(key, value);
+                if (newPattern != null) {
+                    Node var = newPattern.getSubject();
+                    if (!triples.containsKey(var)) {
+                        triples.put(var, new HashSet<Triple>());
                     }
+                    HashSet<Triple> temp = triples.get(var);
+                    temp.add(newPattern);
+                    triples.put(var, temp);
                 }
-
-                newPattern = Triple.create(Var.alloc(var), predicate1, object1);
-
-                this.triplesCovered.add(i);
+            } else if (key.getPredicate().isVariable()) {
+                Triple newPattern = this.createPredicatePattern(key, value);
+                if (newPattern != null) {
+                    Node var = newPattern.getPredicate();
+                    if (!triples.containsKey(var)) {
+                        triples.put(var, new HashSet<Triple>());
+                    }
+                    HashSet<Triple> temp = triples.get(var);
+                    temp.add(newPattern);
+                    triples.put(var, temp);
+                }
             } else {
-                int max = Math.max(subjects.size(), Math.max(predicates.size(), objects.size()));
-                if (max == subjects.size()) {
-                    newPattern = mergeSubjectTPs(subjects, i);
-                } else if (max == predicates.size()) {
-                    newPattern = mergePredicateTPs(predicates, i);
-                } else if (max == objects.size()) {
-                    newPattern = mergeObjectTPs(objects, i);
+                Triple newPattern = this.createObjectPattern(key, value);
+                if (newPattern != null) {
+                    Node var = newPattern.getObject();
+                    if (!triples.containsKey(var)) {
+                        triples.put(var, new HashSet<Triple>());
+                    }
+                    HashSet<Triple> temp = triples.get(var);
+                    temp.add(newPattern);
+                    triples.put(var, temp);
                 }
 
             }
-            pat.add(newPattern);
+            if (this.triplesCovered.containsAll(this.quadCounter))
+                break;
 
         }
+        // logger.info(date.toString()+" I am done with the quads");
+        op = null;
+        BasicPattern pattern = null;
+        for (Entry<Node, HashSet<Triple>> entry : triples.entrySet()) {
+            HashSet<Triple> value = entry.getValue();
+            pattern = new BasicPattern();
+            for (Triple triple : value) {
+                pattern.add(triple);
+            }
+            op = OpUnion.create(op, new OpBGP(pattern));
+        }
 
-        op = new OpBGP(pat);
         Query q = OpAsQuery.asQuery(op); // Convert to a query
         q.addGraphURI(graphName);
         q.setQuerySelectType();
@@ -623,11 +533,12 @@ public class SelectQueryInfo {
             e.printStackTrace();
             throw new RuntimeException();
         }
+        // logger.info(date.toString()+" Created FileOutputStream");
 
         IndentedWriter out = new IndentedWriter(outStream);
         q.output(out);
         out.close();
-        
+
         try {
             outStream.close();
         } catch (IOException e) {

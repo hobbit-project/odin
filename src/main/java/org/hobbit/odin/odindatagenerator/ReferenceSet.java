@@ -59,7 +59,6 @@ public class ReferenceSet {
         } finally {
             dataset.end();
         }
-
     }
 
     /**
@@ -80,7 +79,7 @@ public class ReferenceSet {
         if (!newFolder.exists())
             newFolder.mkdir();
         String fileName = outputFolder + "expectedResults" + streamID + ".sparql";
-
+        
         dataset.begin(ReadWrite.READ);
         ResultSet rs = null;
         try (QueryExecution qExec = QueryExecutionFactory.create(selectQuery, dataset)) {

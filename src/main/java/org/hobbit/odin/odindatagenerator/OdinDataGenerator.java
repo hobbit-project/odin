@@ -497,6 +497,7 @@ public class OdinDataGenerator extends AbstractDataGenerator {
      */
     public Map<Long, ArrayList<String>> convertTimeStampsToNewInterval(TreeMap<Long, String> files) {
 
+        int counter = 0;
         Map<Long, ArrayList<String>> insertList = new TreeMap<Long, ArrayList<String>>();
         for (Map.Entry<Long, String> entry : files.entrySet()) {
             Long oldTimeStamp = entry.getKey();
@@ -523,8 +524,13 @@ public class OdinDataGenerator extends AbstractDataGenerator {
                 insertList.put(newTS.longValue(), new ArrayList<String>());
             }
             insertList.get(newTS.longValue()).add(subFiles);
+            counter++;
         }
-        LOGGER.info("Number of unique transformed time stamps: " + insertList.values().size());
+        LOGGER.info("Number of unique transformed time stamps KEYS: " + insertList.size());
+        LOGGER.info("Number of unique transformed time stamps VALUES: " + counter);
+        int total = insertList.values().stream().mapToInt(List::size).sum();
+        LOGGER.info("Number of unique transformed time stamps VALUES2: " + total);
+
         return insertList;
     }
 
@@ -555,7 +561,6 @@ public class OdinDataGenerator extends AbstractDataGenerator {
         int d = insertList.size() / getDATA_GENERATOR_INSERT_QUERIES();
 
         for (Map.Entry<Long, ArrayList<String>> entry : insertList.entrySet()) {
-            LOGGER.info("Creating stream no."+streamID);
 
             Long originalCurrentTS = entry.getKey();
             ArrayList<String> files = entry.getValue();
@@ -597,7 +602,7 @@ public class OdinDataGenerator extends AbstractDataGenerator {
                     || ((iCounter % getDATA_GENERATOR_INSERT_QUERIES()) == 0)) {
 
                 ArrayList<InsertQueryInfo> insertQueries = this.streams.get(streamID).getInsertQueries();
-                
+
                 // create the select query of the stream
                 SelectQueryInfo selectQuery = new SelectQueryInfo();
                 long selectQueryDelay = (long) (this.initialSelectDelay / Math.pow(2, (streamID - 1)));
@@ -618,9 +623,10 @@ public class OdinDataGenerator extends AbstractDataGenerator {
                 selectQuery.setTimeStamp(selectQueryTS);
                 // create the select query given the last insert query of the
                 // current batch
-                selectQuery.createSelectQuery(insertQueries, getDATA_GENERATOR_OUTPUT_DATASET(),
-                        streamID, defaultGraph);
+                selectQuery.createSelectQuery(insertQueries, getDATA_GENERATOR_OUTPUT_DATASET(), streamID,
+                        defaultGraph);
                 // create a reference set for this select query
+
                 String resultSetFile = reference.queryTDB(selectQuery.getSelectQueryAsString(),
                         getDATA_GENERATOR_OUTPUT_DATASET(), streamID);
                 // store the reference set location
@@ -640,7 +646,7 @@ public class OdinDataGenerator extends AbstractDataGenerator {
             iCounter++;
 
         }
-}
+    }
 
     @Override
     public void receiveCommand(byte command, byte[] data) {
@@ -688,7 +694,7 @@ public class OdinDataGenerator extends AbstractDataGenerator {
                     dataRow = TSVFile.readLine();
                 } catch (IOException | ParseException e) {
                     e.printStackTrace();
-                    if(e instanceof ParseException)
+                    if (e instanceof ParseException)
                         LOGGER.error("Couldn't parse date in " + dataRow);
                     else
                         LOGGER.error("Couldn't read next line ");

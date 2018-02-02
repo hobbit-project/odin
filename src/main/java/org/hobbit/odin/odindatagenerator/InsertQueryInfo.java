@@ -118,6 +118,10 @@ public class InsertQueryInfo {
         }
         // save model for the select query
         modelFile = outputFolder + "model" + insertCounter + ".ttl";
+        if(completeModel.size() == 0){
+            logger.info("Model with size 0 at "+insertCounter);
+            
+        }
         OutputStream o = null;
         try {
             o = new FileOutputStream(modelFile);
