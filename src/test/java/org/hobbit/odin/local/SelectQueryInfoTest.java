@@ -56,26 +56,4 @@ public class SelectQueryInfoTest {
         assertTrue(selectQueryInfo.getSelectQueryAsString().indexOf("FROM") != -1);
 
     }
-
-    //@Test
-    public void intersection() {
-        Set<Integer> intersection = new HashSet<Integer>();
-        intersection.add(1);
-        intersection.add(2);
-        intersection.add(3);
-        intersection.add(4);
-        intersection.add(5);
-        
-        Set<Integer> ids = new HashSet<Integer>();
-        ids.add(7);
-        ids.add(8);
-        ids.add(9);
-        
-        intersection.retainAll(ids);
-        System.out.println(intersection);
-        
-        
-        assertTrue(intersection.isEmpty());
-
-    }
 }

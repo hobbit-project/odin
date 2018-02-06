@@ -50,6 +50,33 @@ import org.apache.log4j.Logger;
 
 public class SelectQueryInfo {
 
+    protected static final Logger logger = Logger.getLogger(SelectQueryInfo.class.getName());
+    /* Time stamp of executing the SELECT query */
+    private long timeStamp;
+    /*
+     * Delay of executing the SELECT query from the beginning of the benchmark
+     */
+    private long delay;
+    /* Location file where the query is stored */
+    private String selectQueryFile = null;
+    /* Location file where the reference set is stored */
+    private String answersFile = null;
+    /*
+     * Triple patterns keys: triple patterns, values: keys: id of triple, value:
+     * node converted into variable
+     */
+    HashMap<Triple, HashMap<Integer, Node>> tps = new HashMap<Triple, HashMap<Integer, Node>>();
+
+    /* Triples ids */
+    HashSet<Integer> quadCounter = new HashSet<Integer>();
+    /* Triples ids covered in the SELECT query */
+    Set<Integer> triplesCovered = new TreeSet<Integer>();
+    /* Variables counter */
+    int variableCounter = 0;
+    /* Variables */
+    HashMap<String, HashSet<Node>> variables = new HashMap<String, HashSet<Node>>();
+
+    /* Setters and Getters */
     public Set<Integer> getTriplesCovered() {
         return triplesCovered;
     }
@@ -74,36 +101,6 @@ public class SelectQueryInfo {
         this.selectQueryFile = selectQueryFile;
     }
 
-    protected static final Logger logger = Logger.getLogger(SelectQueryInfo.class.getName());
-
-    HashMap<Triple, HashMap<Integer, Node>> tps = new HashMap<Triple, HashMap<Integer, Node>>();
-
-    HashSet<Integer> quadCounter = new HashSet<Integer>();
-    Set<Integer> triplesCovered = new TreeSet<Integer>();
-    int variableCounter = 0;
-    HashMap<String, HashSet<Node>> variables = new HashMap<String, HashSet<Node>>();
-
-    /* Time stamp of executing the SELECT query */
-    private long timeStamp;
-    /*
-     * Delay of executing the SELECT query from the beginning of the benchmark
-     */
-    private long delay;
-    /* Location file where the query is stored */
-    private String selectQueryFile = null;
-    /* Location file where the reference set is stored */
-    private String answersFile = null;
-
-    /* Constructors */
-    public SelectQueryInfo() {
-    }
-
-    public SelectQueryInfo(long ts, String file) {
-        this.timeStamp = ts;
-        this.selectQueryFile = file;
-    }
-
-    /* Getters and Setters */
     public String getAnswersFile() {
         return answersFile;
     }
@@ -126,6 +123,22 @@ public class SelectQueryInfo {
 
     public void setTimeStamp(long timeStamp) {
         this.timeStamp = timeStamp;
+    }
+
+    /* Constructors */
+    public SelectQueryInfo() {
+    }
+
+    public SelectQueryInfo(long ts, String file) {
+        this.delay = 0l;
+        this.timeStamp = ts;
+        this.selectQueryFile = file;
+        this.answersFile = null;
+        this.quadCounter = new HashSet<Integer>();
+        this.triplesCovered = new TreeSet<Integer>();
+        this.variableCounter = 0;
+        this.tps = new HashMap<Triple, HashMap<Integer, Node>>();
+        this.variables = new HashMap<String, HashSet<Node>>();
     }
 
     /**
@@ -161,12 +174,12 @@ public class SelectQueryInfo {
     }
 
     /**
-     * Iterates over the statements of a model and creates all possible triple
-     * patterns with one variable. Then, it places each TP into 3 subsets: (i)
-     * subjectTPs: set of TPs where only the subject is a variable. (ii)
-     * predicateTPs: set of TPs where only the predicate is a variable. (iii)
-     * objectTPs: set of TPs where only the object is a variable. We call this
-     * every TP that belongs to this set, objectTP.
+     * Iterates over the statements of a model and converts each original triple
+     * into a new triple by changing one element of the original triple, at a
+     * time, to a temporary node with label "?". Then, it places each new triple
+     * into a map (tps) that has as keys the new triples and as values another
+     * map that has as keys the ids of the original triples and as values the
+     * element of the triple that was covered into a variable.
      * 
      * 
      * @param model,
@@ -231,11 +244,12 @@ public class SelectQueryInfo {
      * corresponding subjects.
      * 
      * 
-     * @param subjects,
-     *            the map of triple ids and their corresponding subjects
-     * @param i,
-     *            the id number of the triple
-     * @return the merged triple
+     * @param triple,
+     *            the triple to be converted into a triple pattern
+     * @param list,
+     *            a map that contains the ids of the original triples and the
+     *            corresponding answer
+     * @return the new triple
      */
     public Triple createSubjectPattern(Triple triple, HashMap<Integer, Node> list) {
 
@@ -277,11 +291,12 @@ public class SelectQueryInfo {
      * corresponding predicates.
      * 
      * 
-     * @param subjects,
-     *            the map of triple ids and their corresponding predicates
-     * @param i,
-     *            the id number of the triple
-     * @return the merged triple
+     * @param triple,
+     *            the triple to be converted into a triple pattern
+     * @param list,
+     *            a map that contains the ids of the original triples and the
+     *            corresponding answer
+     * @return the new triple
      */
     public Triple createPredicatePattern(Triple triple, HashMap<Integer, Node> list) {
 
@@ -323,11 +338,12 @@ public class SelectQueryInfo {
      * corresponding objects.
      * 
      * 
-     * @param subjects,
-     *            the map of triple ids and their corresponding objects
-     * @param i,
-     *            the id number of the triple
-     * @return the merged triple
+     * @param triple,
+     *            the triple to be converted into a triple pattern
+     * @param list,
+     *            a map that contains the ids of the original triples and the
+     *            corresponding answer
+     * @return the new triple
      */
     public Triple createObjectPattern(Triple triple, HashMap<Integer, Node> list) {
 
@@ -364,6 +380,14 @@ public class SelectQueryInfo {
 
     }
 
+    /**
+     * Orders the map of triple patterns based on the frequency in the original
+     * model. To secure the deterministic nature of the function, if two triple
+     * patterns have the same frequency, the function compares the String
+     * representation of the triple patterns.
+     * 
+     * @return an ordered map of triples patterns based on their frequency
+     */
     private Map<Triple, HashMap<Integer, Node>> sortBySizeOfValues() {
 
         List<Entry<Triple, HashMap<Integer, Node>>> list = new LinkedList<Entry<Triple, HashMap<Integer, Node>>>(
@@ -372,11 +396,17 @@ public class SelectQueryInfo {
         // Sorting the list based on values
         Collections.sort(list, new Comparator<Entry<Triple, HashMap<Integer, Node>>>() {
             public int compare(Entry<Triple, HashMap<Integer, Node>> o1, Entry<Triple, HashMap<Integer, Node>> o2) {
+                String tp1 = o1.getKey().toString();
+                String tp2 = o2.getKey().toString();
                 HashMap<Integer, Node> list1 = o1.getValue();
                 HashMap<Integer, Node> list2 = o2.getValue();
                 Integer length1 = list1.size();
                 Integer length2 = list2.size();
-                return length2.compareTo(length1);
+                int com = length2.compareTo(length1);
+                if (com == 0) {
+                    return tp2.compareTo(tp1);
+                } else
+                    return length2.compareTo(length1);
             }
         });
 
@@ -393,37 +423,27 @@ public class SelectQueryInfo {
      * Creates a SELECT SPARQL query given a set of INSERT SPARQL queries (as a
      * UTF-8 encoded String) and stores it into a file. This method uses a Least
      * General Generalization (LGG) technique. The aim of this function is
-     * twofold: create a SELECT query (1) with the least possible triple
-     * patterns so that (2) the resulting query is able identify if all the
-     * triples of the input INSERT query were inserted into the triple store.
+     * three-fold: create a SELECT query that (1) includes the least number of
+     * triple patterns, (2) checks if at least 50% of the original inserted
+     * triples have been successfully added to the triple store and (3)
+     * retrieves the smallest possible answer set.
      * 
-     * Firstly, for each triple, we find the triple pattern (TPs) with one
-     * variable. We divide set of TPs into 3 subsets: (i) subjectTPs: set of TPs
-     * where only the subject is a variable. We call this every TP that belongs
-     * to this set, subjectTP. (ii) predicateTPs: set of TPs where only the
-     * predicate is a variable. We call this every TP that belongs to this set,
-     * predicateTP. (iii) objectTPs: set of TPs where only the object is a
-     * variable. We call this every TP that belongs to this set, objectTP.
+     * Initially, it converts each original triple of the INSERT SPARQL queries
+     * into a new triple by changing one element of the original triple, at a
+     * time, to a temporary node with label "?". Then, it places each new triple
+     * into a map (tps) that has as keys the new triples and as values another
+     * map that has as keys the ids of the original triples and as values the
+     * element of the triple that was covered into a variable. Secondly, it
+     * orders the map of triple patterns based on the frequency in the original
+     * model.
      * 
-     * Then, for the first triple, we compare its subjectTP with the subjectTPs
-     * of the other triples. If two subjectTPs are compatible (their
-     * non-variable parts are the same), we store the subjectTP of the other
-     * triple in the set A. We follow the same procedure for the predicateTP and
-     * the objectTP of the first triple, where we get as a result two more sets:
-     * B and C resp.
+     * Finally, once the ordered map of the triples is received, it creates a
+     * SELECT SPARQL query including at least half of most frequent triples of
+     * the initial INSERT queries.
      * 
-     * We compare the size of A, B and C and we keep the one with the most
-     * elements, e.g. A. We want to keep the set with the most elements cause we
-     * can cover more triples with one single TP.
+     * Note that, all triple patterns with different variable names are connect
+     * with each other in the SELECT query using the UNION clause.
      * 
-     * Then we merge the first triple's subjectTP with all the subjectTPs
-     * included A into one TP.
-     * 
-     * We continue the same procedure with the rest of the triples. We don't
-     * care about triples that have already been covered.
-     * 
-     * At the end, we have a select query that covers all of the triples in the
-     * minimum size.
      * 
      * @param insertQueries,
      *            a set of UTF-8 encoded String representations of the INSERT
@@ -436,7 +456,7 @@ public class SelectQueryInfo {
      *            the name of the graph that the select query will be performed
      *            against
      */
-    //TODO: minimize query
+
     public void createSelectQuery(ArrayList<InsertQueryInfo> insertQueries, String outputFolder, int streamCounter,
             String graphName) {
 
@@ -453,20 +473,29 @@ public class SelectQueryInfo {
             model.add(tempModel);
         }
 
-        //logger.info("Size of model: " + model.size());
-        //logger.info("Read all files");
+        // logger.info("Size of model: " + model.size());
+        // logger.info("Read all files");
         createTriplePatterns(model);
-        //logger.info("Created triple patterns");
+        // logger.info("Created triple patterns");
 
         Map<Triple, HashMap<Integer, Node>> sortedTps = sortBySizeOfValues();
 
-        Op op = null;
         LinkedHashMap<Node, HashSet<Triple>> triples = new LinkedHashMap<Node, HashSet<Triple>>();
 
-        for (Map.Entry<Triple, HashMap<Integer, Node>> entry : sortedTps.entrySet()) {
+        int tpCovered = (int) this.quadCounter.size() / 2;
+        // logger.info("quadCounter: " + this.quadCounter.size());
+        // logger.info("tpCovered: " + tpCovered);
 
+        for (Map.Entry<Triple, HashMap<Integer, Node>> entry : sortedTps.entrySet()) {
             Triple key = entry.getKey();
             HashMap<Integer, Node> value = entry.getValue();
+            // logger.info("\n\n");
+
+            /*
+             * logger.info("Key " + key.toString()); for (Entry<Integer, Node> e
+             * : value.entrySet()) { logger.info(" " + e.getKey());
+             * logger.info(" " + e.getValue()); }
+             */
 
             if (key.getSubject().isVariable()) {
                 Triple newPattern = this.createSubjectPattern(key, value);
@@ -503,12 +532,23 @@ public class SelectQueryInfo {
                 }
 
             }
-            if (this.triplesCovered.containsAll(this.quadCounter))
+
+            HashSet<Integer> ids = new HashSet<Integer>(this.triplesCovered);
+            HashSet<Integer> intersection = new HashSet<Integer>(this.quadCounter);
+            intersection.retainAll(ids);
+
+            int currentCovered = tpCovered - intersection.size();
+
+            // logger.info("Total must be covered: " + tpCovered + " Covered: "
+            // + intersection.size() + " Remaining: "
+            // + currentCovered);
+
+            if (currentCovered <= 0)
                 break;
 
         }
-        // logger.info(date.toString()+" I am done with the quads");
-        op = null;
+
+        Op op = null;
         BasicPattern pattern = null;
         for (Entry<Node, HashSet<Triple>> entry : triples.entrySet()) {
             HashSet<Triple> value = entry.getValue();
