@@ -4,8 +4,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
 import org.hobbit.odin.odindatagenerator.InsertQueryInfo;
@@ -51,9 +49,10 @@ public class SelectQueryInfoTest {
                 System.getProperty("user.dir") + "/src/test/resources/data/debug_data/selectQuery2/", 1,
                 "http://www.virtuoso-graph.com/");
 
-        
         assertTrue(selectQueryInfo.getSelectQueryAsString() != null);
         assertTrue(selectQueryInfo.getSelectQueryAsString().indexOf("FROM") != -1);
 
     }
+
+    
 }

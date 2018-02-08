@@ -497,7 +497,6 @@ public class OdinDataGenerator extends AbstractDataGenerator {
      */
     public Map<Long, ArrayList<String>> convertTimeStampsToNewInterval(TreeMap<Long, String> files) {
 
-        int counter = 0;
         Map<Long, ArrayList<String>> insertList = new TreeMap<Long, ArrayList<String>>();
         for (Map.Entry<Long, String> entry : files.entrySet()) {
             Long oldTimeStamp = entry.getKey();
@@ -524,12 +523,7 @@ public class OdinDataGenerator extends AbstractDataGenerator {
                 insertList.put(newTS.longValue(), new ArrayList<String>());
             }
             insertList.get(newTS.longValue()).add(subFiles);
-            counter++;
         }
-        LOGGER.info("Number of unique transformed time stamps KEYS: " + insertList.size());
-        LOGGER.info("Number of unique transformed time stamps VALUES: " + counter);
-        int total = insertList.values().stream().mapToInt(List::size).sum();
-        LOGGER.info("Number of unique transformed time stamps VALUES2: " + total);
 
         return insertList;
     }

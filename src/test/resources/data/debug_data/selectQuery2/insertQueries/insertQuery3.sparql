@@ -2,7 +2,7 @@ WITH <http://www.virtuoso-graph.com/>
 INSERT {
   <http://www.myOntology.com#Event3> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.myOntology.com#myEvent>.
   <http://www.myOntology.com#Event3> <http://www.myOntology.com#hasMsg> "18 again!!" .
-  <http://www.myOntology.com#Event3> <http://www.myOntology.com#beginTime> "2017-02-15T12:00:00+02:00"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
+  <http://www.myOntology.com#Event3> <http://www.myOntology.com#beginTime> "2017-02-16T12:00:00+02:00"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
 }
 WHERE
   {  }
