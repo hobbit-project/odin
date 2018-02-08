@@ -5,7 +5,12 @@ import org.apache.jena.rdf.model.RDFNode;
 public class ResultValue {
     Object value;
 
+    public Object getValue(){
+        return this.value;
+    }
+    
     public ResultValue(RDFNode v) {
+        
         if (!v.isLiteral()) {
             this.value = (String) v.asResource().getURI();
         } else {

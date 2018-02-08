@@ -454,7 +454,6 @@ public class OdinEvaluationModule extends AbstractEvaluationModule {
         while (results.hasNext()) {
             // get a binding - table row
             QuerySolution solution = results.next();
-            int bindingsCounter = 0;
             // get value of each named variable in this binding
             HashMap<String, ResultValue> binding = new HashMap<String, ResultValue>();
 
@@ -469,8 +468,7 @@ public class OdinEvaluationModule extends AbstractEvaluationModule {
                 }
 
             }
-            answers.add(bindingsCounter, binding);
-            bindingsCounter++;
+            answers.add(binding);
         }
         return answers;
     }

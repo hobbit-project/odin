@@ -328,7 +328,7 @@ public class OdinEvaluationModuleTest {
 
     }
     
-    @Test
+    //@Test
     public void test(){
         Model newModel = ModelFactory.createDefaultModel();
         Resource experiment = newModel.createResource("http://w3id.org/bench/123");
@@ -369,5 +369,173 @@ public class OdinEvaluationModuleTest {
         assertTrue(!v4.equals(v));
         assertTrue(!v4.equals(v3));
         
+    }
+    
+    //@Test
+    public void testEvaluationWithUnion() {
+        envVariablesEvaluationModule.set(Constants.HOBBIT_SESSION_ID_KEY, "Test4");
+        envVariablesEvaluationModule.set(Constants.HOBBIT_EXPERIMENT_URI_KEY, Constants.EXPERIMENT_URI_NS + "123");
+
+        envVariablesEvaluationModule.set(OdinConstants.EVALUATION_AVERAGE_TASK_DELAY,
+                "http://w3id.org/bench#averageTaskDelay");
+        envVariablesEvaluationModule.set(OdinConstants.EVALUATION_MICRO_AVERAGE_RECALL,
+                "http://w3id.org/bench#microAverageRecall");
+        envVariablesEvaluationModule.set(OdinConstants.EVALUATION_MICRO_AVERAGE_PRECISION,
+                "http://w3id.org/bench#microAveragePrecision");
+        envVariablesEvaluationModule.set(OdinConstants.EVALUATION_MICRO_AVERAGE_FMEASURE,
+                "http://w3id.org/bench#microAverageFmeasure");
+
+        envVariablesEvaluationModule.set(OdinConstants.EVALUATION_MACRO_AVERAGE_RECALL,
+                "http://w3id.org/bench#macroAverageRecall");
+        envVariablesEvaluationModule.set(OdinConstants.EVALUATION_MACRO_AVERAGE_PRECISION,
+                "http://w3id.org/bench#macroAveragePrecision");
+        envVariablesEvaluationModule.set(OdinConstants.EVALUATION_MACRO_AVERAGE_FMEASURE,
+                "http://w3id.org/bench#macroAverageFmeasure");
+
+        envVariablesEvaluationModule.set(OdinConstants.EVALUATION_MAX_TPS, "http://w3id.org/bench#maxTPS");
+        envVariablesEvaluationModule.set(OdinConstants.EVALUATION_AVERAGE_TPS, "http://w3id.org/bench#averageTPS");
+
+        envVariablesEvaluationModule.set(OdinConstants.EVALUATION_TASKS_EVALUATION_RECALL,
+                "http://w3id.org/bench#tasksRecall");
+        envVariablesEvaluationModule.set(OdinConstants.EVALUATION_TASKS_EVALUATION_TPS,
+                "http://w3id.org/bench#tasksTPS");
+        envVariablesEvaluationModule.set(OdinConstants.EVALUATION_TASKS_EVALUATION_DELAY,
+                "http://w3id.org/bench#tasksAnswerDelay");
+        envVariablesEvaluationModule.set(OdinConstants.EVALUATION_TASKS_EVALUATION_PRECISION,
+                "http://w3id.org/bench#tasksPrecision");
+        envVariablesEvaluationModule.set(OdinConstants.EVALUATION_TASKS_EVALUATION_FMEASURE,
+                "http://w3id.org/bench#tasksFmeasure");
+
+        OdinEvaluationModule module = new OdinEvaluationModule();
+        
+        module.internalInit();
+        // module.setEVALUATION_PARAMETER_KEY("Test1");
+        /* FIRST TASK */
+        
+        Path path1 = Paths.get(System.getProperty("user.dir")
+                + "/src/test/resources/data/debug_data/evaluationModule/referenceSet4.sparql");
+        System.out.println(path1.toString());
+        byte[] dataExpected = null;
+        try {
+            dataExpected = Files.readAllBytes(path1);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        byte[][] expectedAnswers1 = new byte[4][];
+        expectedAnswers1[0] = RabbitMQUtils.writeString(String.valueOf(1000));
+        expectedAnswers1[1] = RabbitMQUtils.writeString(String.valueOf(60));
+        expectedAnswers1[2] = RabbitMQUtils.writeString(String.valueOf(760));
+        expectedAnswers1[3] = dataExpected;
+
+        byte[] expectedTask1 = RabbitMQUtils.writeByteArrays(expectedAnswers1);
+        ////////////////////////////////////////////////////////////////////////
+
+        Path path2 = Paths.get(System.getProperty("user.dir")
+                + "/src/test/resources/data/debug_data/evaluationModule/receivedSet4.sparql");
+        byte[] dataReceived = null;
+        try {
+            dataReceived = Files.readAllBytes(path2);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        try {
+            module.evaluateResponse(expectedTask1, dataReceived, 1350, 2000);
+            Model model = module.summarizeEvaluation();
+            StmtIterator it = model.listStatements();
+            while (it.hasNext()) {
+                Statement statement = it.next();
+                Resource subject = statement.getSubject();
+                if(subject.asResource().getURI().contains("Observation"))
+                    System.out.println(statement.toString());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    
+    @Test
+    public void testEvaluationWithUnion2() {
+        envVariablesEvaluationModule.set(Constants.HOBBIT_SESSION_ID_KEY, "Test5");
+        envVariablesEvaluationModule.set(Constants.HOBBIT_EXPERIMENT_URI_KEY, Constants.EXPERIMENT_URI_NS + "123");
+
+        envVariablesEvaluationModule.set(OdinConstants.EVALUATION_AVERAGE_TASK_DELAY,
+                "http://w3id.org/bench#averageTaskDelay");
+        envVariablesEvaluationModule.set(OdinConstants.EVALUATION_MICRO_AVERAGE_RECALL,
+                "http://w3id.org/bench#microAverageRecall");
+        envVariablesEvaluationModule.set(OdinConstants.EVALUATION_MICRO_AVERAGE_PRECISION,
+                "http://w3id.org/bench#microAveragePrecision");
+        envVariablesEvaluationModule.set(OdinConstants.EVALUATION_MICRO_AVERAGE_FMEASURE,
+                "http://w3id.org/bench#microAverageFmeasure");
+
+        envVariablesEvaluationModule.set(OdinConstants.EVALUATION_MACRO_AVERAGE_RECALL,
+                "http://w3id.org/bench#macroAverageRecall");
+        envVariablesEvaluationModule.set(OdinConstants.EVALUATION_MACRO_AVERAGE_PRECISION,
+                "http://w3id.org/bench#macroAveragePrecision");
+        envVariablesEvaluationModule.set(OdinConstants.EVALUATION_MACRO_AVERAGE_FMEASURE,
+                "http://w3id.org/bench#macroAverageFmeasure");
+
+        envVariablesEvaluationModule.set(OdinConstants.EVALUATION_MAX_TPS, "http://w3id.org/bench#maxTPS");
+        envVariablesEvaluationModule.set(OdinConstants.EVALUATION_AVERAGE_TPS, "http://w3id.org/bench#averageTPS");
+
+        envVariablesEvaluationModule.set(OdinConstants.EVALUATION_TASKS_EVALUATION_RECALL,
+                "http://w3id.org/bench#tasksRecall");
+        envVariablesEvaluationModule.set(OdinConstants.EVALUATION_TASKS_EVALUATION_TPS,
+                "http://w3id.org/bench#tasksTPS");
+        envVariablesEvaluationModule.set(OdinConstants.EVALUATION_TASKS_EVALUATION_DELAY,
+                "http://w3id.org/bench#tasksAnswerDelay");
+        envVariablesEvaluationModule.set(OdinConstants.EVALUATION_TASKS_EVALUATION_PRECISION,
+                "http://w3id.org/bench#tasksPrecision");
+        envVariablesEvaluationModule.set(OdinConstants.EVALUATION_TASKS_EVALUATION_FMEASURE,
+                "http://w3id.org/bench#tasksFmeasure");
+
+        OdinEvaluationModule module = new OdinEvaluationModule();
+        
+        module.internalInit();
+        // module.setEVALUATION_PARAMETER_KEY("Test1");
+        /* FIRST TASK */
+        
+        Path path1 = Paths.get(System.getProperty("user.dir")
+                + "/src/test/resources/data/debug_data/evaluationModule/referenceSet4.sparql");
+        System.out.println(path1.toString());
+        byte[] dataExpected = null;
+        try {
+            dataExpected = Files.readAllBytes(path1);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        byte[][] expectedAnswers1 = new byte[4][];
+        expectedAnswers1[0] = RabbitMQUtils.writeString(String.valueOf(1000));
+        expectedAnswers1[1] = RabbitMQUtils.writeString(String.valueOf(60));
+        expectedAnswers1[2] = RabbitMQUtils.writeString(String.valueOf(760));
+        expectedAnswers1[3] = dataExpected;
+
+        byte[] expectedTask1 = RabbitMQUtils.writeByteArrays(expectedAnswers1);
+        ////////////////////////////////////////////////////////////////////////
+
+        Path path2 = Paths.get(System.getProperty("user.dir")
+                + "/src/test/resources/data/debug_data/evaluationModule/receivedSet5.sparql");
+        byte[] dataReceived = null;
+        try {
+            dataReceived = Files.readAllBytes(path2);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        try {
+            module.evaluateResponse(expectedTask1, dataReceived, 1350, 2000);
+            Model model = module.summarizeEvaluation();
+            StmtIterator it = model.listStatements();
+            while (it.hasNext()) {
+                Statement statement = it.next();
+                Resource subject = statement.getSubject();
+                if(subject.asResource().getURI().contains("Observation"))
+                    System.out.println(statement.toString());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }
