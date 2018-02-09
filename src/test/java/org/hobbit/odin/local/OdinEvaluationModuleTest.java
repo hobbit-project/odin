@@ -28,7 +28,7 @@ public class OdinEvaluationModuleTest {
     @Rule
     public final EnvironmentVariables envVariablesEvaluationModule = new EnvironmentVariables();
 
-    //@Test
+    @Test
     public void testInternalInit() {
         envVariablesEvaluationModule.set(Constants.HOBBIT_SESSION_ID_KEY, "0");
         envVariablesEvaluationModule.set(Constants.HOBBIT_EXPERIMENT_URI_KEY, Constants.EXPERIMENT_URI_NS + "123");
@@ -93,7 +93,7 @@ public class OdinEvaluationModuleTest {
                 .equals(ResourceFactory.createProperty("http://w3id.org/bench#averageTPS")));
     }
 
-    //@Test
+    @Test
     public void testEvaluationWithOneTask() {
         envVariablesEvaluationModule.set(Constants.HOBBIT_SESSION_ID_KEY, "Test1");
         envVariablesEvaluationModule.set(Constants.HOBBIT_EXPERIMENT_URI_KEY, Constants.EXPERIMENT_URI_NS + "123");
@@ -129,11 +129,11 @@ public class OdinEvaluationModuleTest {
                 "http://w3id.org/bench#tasksFmeasure");
 
         OdinEvaluationModule module = new OdinEvaluationModule();
-        
+
         module.internalInit();
         // module.setEVALUATION_PARAMETER_KEY("Test1");
         /* FIRST TASK */
-        
+
         Path path1 = Paths.get(System.getProperty("user.dir")
                 + "/src/test/resources/data/debug_data/evaluationModule/referenceSet1.sparql");
         System.out.println(path1.toString());
@@ -175,7 +175,7 @@ public class OdinEvaluationModuleTest {
         }
     }
 
-    //@Test
+    @Test
     public void testEvaluationWithMultipleTasks() {
         envVariablesEvaluationModule.set(Constants.HOBBIT_SESSION_ID_KEY, "Test2");
         envVariablesEvaluationModule.set(Constants.HOBBIT_EXPERIMENT_URI_KEY, Constants.EXPERIMENT_URI_NS + "123");
@@ -327,51 +327,8 @@ public class OdinEvaluationModuleTest {
         }
 
     }
-    
-    //@Test
-    public void test(){
-        Model newModel = ModelFactory.createDefaultModel();
-        Resource experiment = newModel.createResource("http://w3id.org/bench/123");
-        
-        double d = 0.1111;
-        Literal dNumber = newModel.createTypedLiteral(d,
-                XSDDatatype.XSDdouble);
-        newModel.add(experiment, newModel.createProperty("http://w3id.org/bench/value"), dNumber);
-        
-        
-        double d2 = 0.11110000000009;
-        Literal dNumber2 = newModel.createTypedLiteral(d2,
-                XSDDatatype.XSDdouble);
-        newModel.add(experiment, newModel.createProperty("http://w3id.org/bench/value"), dNumber2);
-        
-        
-        ResultValue v = new ResultValue(dNumber);
-        ResultValue v2 = new ResultValue(dNumber2);
-        
-        assertTrue(v.equals(v2));
-        //////////////////////////////////////////////////////////////////////////////////
-        float d3 = 0.11f;
-        Literal dNumber3 = newModel.createTypedLiteral(d3,
-                XSDDatatype.XSDfloat);
-        newModel.add(experiment, newModel.createProperty("http://w3id.org/bench/value"), dNumber3);
-        
-        ResultValue v3 = new ResultValue(dNumber3);
-        assertTrue(!v3.equals(v));
-        assertTrue(!v3.equals(v2));
-        //////////////////////////////////////////////////////////////////////////////////
 
-        String str = "blele";
-        Literal strL = newModel.createTypedLiteral(str,
-                XSDDatatype.XSDstring);
-        newModel.add(experiment, newModel.createProperty("http://w3id.org/bench/value"), strL);
-        ResultValue v4 = new ResultValue(strL);
-
-        assertTrue(!v4.equals(v));
-        assertTrue(!v4.equals(v3));
-        
-    }
-    
-    //@Test
+    @Test
     public void testEvaluationWithUnion() {
         envVariablesEvaluationModule.set(Constants.HOBBIT_SESSION_ID_KEY, "Test4");
         envVariablesEvaluationModule.set(Constants.HOBBIT_EXPERIMENT_URI_KEY, Constants.EXPERIMENT_URI_NS + "123");
@@ -407,11 +364,11 @@ public class OdinEvaluationModuleTest {
                 "http://w3id.org/bench#tasksFmeasure");
 
         OdinEvaluationModule module = new OdinEvaluationModule();
-        
+
         module.internalInit();
         // module.setEVALUATION_PARAMETER_KEY("Test1");
         /* FIRST TASK */
-        
+
         Path path1 = Paths.get(System.getProperty("user.dir")
                 + "/src/test/resources/data/debug_data/evaluationModule/referenceSet4.sparql");
         System.out.println(path1.toString());
@@ -447,14 +404,14 @@ public class OdinEvaluationModuleTest {
             while (it.hasNext()) {
                 Statement statement = it.next();
                 Resource subject = statement.getSubject();
-                if(subject.asResource().getURI().contains("Observation"))
+                if (subject.asResource().getURI().contains("Observation"))
                     System.out.println(statement.toString());
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
-    
+
     @Test
     public void testEvaluationWithUnion2() {
         envVariablesEvaluationModule.set(Constants.HOBBIT_SESSION_ID_KEY, "Test5");
@@ -491,11 +448,11 @@ public class OdinEvaluationModuleTest {
                 "http://w3id.org/bench#tasksFmeasure");
 
         OdinEvaluationModule module = new OdinEvaluationModule();
-        
+
         module.internalInit();
         // module.setEVALUATION_PARAMETER_KEY("Test1");
         /* FIRST TASK */
-        
+
         Path path1 = Paths.get(System.getProperty("user.dir")
                 + "/src/test/resources/data/debug_data/evaluationModule/referenceSet4.sparql");
         System.out.println(path1.toString());
@@ -531,11 +488,12 @@ public class OdinEvaluationModuleTest {
             while (it.hasNext()) {
                 Statement statement = it.next();
                 Resource subject = statement.getSubject();
-                if(subject.asResource().getURI().contains("Observation"))
+                if (subject.asResource().getURI().contains("Observation"))
                     System.out.println(statement.toString());
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
+
 }
