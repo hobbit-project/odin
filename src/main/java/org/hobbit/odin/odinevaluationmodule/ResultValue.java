@@ -1,6 +1,11 @@
 package org.hobbit.odin.odinevaluationmodule;
 
-import org.apache.jena.rdf.model.Literal;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.TimeZone;
+
+import javax.xml.bind.DatatypeConverter;
+
 import org.apache.jena.rdf.model.RDFNode;
 
 public class ResultValue {
@@ -11,16 +16,24 @@ public class ResultValue {
     }
 
     public ResultValue(RDFNode v) {
-
         if (!v.isLiteral()) {
             this.value = (String) v.asResource().getURI();
         } else {
+
             try {
-                this.value = (Double) v.asLiteral().getDouble();
+                this.value = (Double) DatatypeConverter.parseDouble(v.asLiteral().getLexicalForm());
             } catch (Exception e) {
-                //this.value = (String) v.asLiteral().getLexicalForm();
-                this.value = (Literal) v.asLiteral();
+                try {
+                    Calendar cal = DatatypeConverter.parseDateTime(v.asLiteral().getLexicalForm());
+                    long temp = cal.getTimeInMillis();
+                    SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS");
+                    df.setTimeZone(TimeZone.getTimeZone("GMT"));
+                    this.value = (String) df.format(temp);
+                } catch (Exception e1) {
+                    this.value = (String) DatatypeConverter.parseString(v.asLiteral().getLexicalForm());
+                }
             }
+
         }
     }
 
@@ -44,8 +57,8 @@ public class ResultValue {
                     return true;
                 } else
                     return false;
-            } else if (other.value instanceof Literal && value instanceof Literal) {
-                return ((Literal) value).equals((Literal) other.value);
+            } else if (other.value instanceof String && value instanceof String) {
+                return ((String) value).equals((String) other.value);
             }
         }
         return false;
