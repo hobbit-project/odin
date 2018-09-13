@@ -463,9 +463,9 @@ public class OdinEvaluationModule extends AbstractEvaluationModule {
                     // get the resource
                     RDFNode answer = solution.get(variable);
                     binding.put(variable, new ResultValue(answer));
-                } else {
+                } /*else {
                     binding.put(variable, null);
-                }
+                }*/
 
             }
             answers.add(binding);
@@ -500,6 +500,7 @@ public class OdinEvaluationModule extends AbstractEvaluationModule {
                 RabbitMQUtils.readString(expectedBuffer).getBytes(StandardCharsets.UTF_8));
         ResultSet expected = ResultSetFactory.fromJSON(inExpected);
         expectedAnswers = this.getBindings(expected);
+        LOGGER.info("Size of expected: "+expectedAnswers.size());
         ////////////////////////////////////////////////////////////////////////////////////////////////////
         ArrayList<HashMap<String, ResultValue>> receivedAnswers = new ArrayList<HashMap<String, ResultValue>>();
         InputStream inReceived = new ByteArrayInputStream(receivedData);
@@ -512,7 +513,8 @@ public class OdinEvaluationModule extends AbstractEvaluationModule {
                     "Evaluation module received results that are not in JSON format.\n Assigning empty results set to received results.");
         }
         receivedAnswers = this.getBindings(received);
-
+        LOGGER.info("Size of received: "+receivedAnswers.size());
+        
         ////////////////////////////////////////////////////////////////////////////////////////////////////
         int truePositives = 0;
         int falsePositives = 0;
@@ -521,6 +523,7 @@ public class OdinEvaluationModule extends AbstractEvaluationModule {
         for (HashMap<String, ResultValue> expectedBinding : expectedAnswers) {
             boolean tpFound = false;
             for (HashMap<String, ResultValue> receivedBinding : receivedAnswers) {
+                
                 if (expectedBinding.equals(receivedBinding)) {
                     tpFound = true;
                     break;
@@ -538,6 +541,7 @@ public class OdinEvaluationModule extends AbstractEvaluationModule {
         double precision = (double) truePositives / (double) (truePositives + falsePositives);
         double tps = (double) modelSize / (double) (streamEndPoint - streamBeginPoint);
 
+        
         if (Double.isNaN(precision) == true)
             precision = 0.0d;
         this.setSumPrecision(this.getSumPrecision() + precision);
@@ -552,6 +556,10 @@ public class OdinEvaluationModule extends AbstractEvaluationModule {
         setTotalFalsePositives(getTotalFalsePositives() + falsePositives);
         setTotalTruePositives(getTotalTruePositives() + truePositives);
 
+        LOGGER.info("recall "+recall);
+        LOGGER.info("precision "+precision);
+
+        
         TaskEvaluation newEvaluation = new TaskEvaluation(recall, precision, tps, delay, receivedAnswers.size(),
                 expectedAnswers.size());
 

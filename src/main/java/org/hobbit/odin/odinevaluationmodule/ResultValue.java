@@ -15,6 +15,17 @@ public class ResultValue {
         return this.value;
     }
 
+    @Override
+    public String toString(){
+        if(value == null)
+            return "Null";
+        
+        else{
+            return this.value.toString();
+        }
+        
+    }
+    
     public ResultValue(RDFNode v) {
         if (!v.isLiteral()) {
             this.value = (String) v.asResource().getURI();

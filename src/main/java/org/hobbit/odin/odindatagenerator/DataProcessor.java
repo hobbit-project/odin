@@ -37,13 +37,15 @@ public class DataProcessor {
     /* rdf:type property */
     Property typeProperty = RDF.type;
     HashMap<String, Long> filesCounter = new HashMap<String, Long>();
+    int ID;
 
     /* Constructor */
-    public DataProcessor(String outputDirectory, String mimickingDataset) {
+    public DataProcessor(String outputDirectory, String mimickingDataset, int id) {
         this.outputDirectory = outputDirectory;
         this.getProperties(mimickingDataset);
         filesCounter = new HashMap<String, Long>();
         timeStamps = new TreeMap<String, String>();
+        this.ID = id;
     }
 
     /* Getters */
@@ -75,6 +77,12 @@ public class DataProcessor {
         } else if (mimickingAlgorithm.contains("TWIG")) {
             this.classProperty = MainClassProperty.TWIG_MAINCLASS.mainClassProperty();
             this.timeStampProperty = TimeStampProperty.TWIG_TIMESTAMP.timeStampProperty();
+        } else if (mimickingAlgorithm.contains("TT")) {
+            this.classProperty = MainClassProperty.TT_DATA_MAINCLASS.mainClassProperty();
+            this.timeStampProperty = TimeStampProperty.TT_DATA_TIMESTAMP.timeStampProperty();
+        } else if (mimickingAlgorithm.contains("OBS")) {
+            this.classProperty = MainClassProperty.OBS_DATA_MAINCLASS.mainClassProperty();
+            this.timeStampProperty = TimeStampProperty.OBS_DATA_TIMESTAMP.timeStampProperty();
         } else {
             logger.error("Invalid mimicking algorithm name " + mimickingAlgorithm);
             throw new RuntimeException();
@@ -254,8 +262,12 @@ public class DataProcessor {
         if (!filesCounter.containsKey(timeStamp)) {
             SimpleDateFormat df = null;
             Date date = null;
-            try {
+            try {// 2017-02-03T13:34:44Z
                 if (this.classProperty.equals(MainClassProperty.TWIG_MAINCLASS.mainClassProperty()))
+                    df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+                else if (this.classProperty.equals(MainClassProperty.TT_DATA_MAINCLASS.mainClassProperty()))
+                    df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS");
+                else if (this.classProperty.equals(MainClassProperty.OBS_DATA_MAINCLASS.mainClassProperty()))
                     df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
                 else
                     df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS");
@@ -292,9 +304,9 @@ public class DataProcessor {
             e.printStackTrace();
             throw new RuntimeException();
         }
-        
+
         timeStamps.put(timeStamp, fileName);
-        
+
         try {
             writer.close();
         } catch (IOException e) {
@@ -312,7 +324,7 @@ public class DataProcessor {
      * @param output,
      *            the output folder
      */
-    
+
     public void writeTimeStamps(String output) {
 
         if (timeStamps.isEmpty()) {
@@ -321,7 +333,7 @@ public class DataProcessor {
         }
 
         String logFile = output + "timeStamps.tsv";
-        logger.info("Writing timestamps into file: " + logFile);
+        logger.info(ID + " Writing timestamps into file: " + logFile);
         BufferedWriter writer = null;
 
         try {
@@ -356,7 +368,7 @@ public class DataProcessor {
             logger.error("Couldn't close file " + logFile);
             throw new RuntimeException();
         }
-        
+
         if (!(new File(logFile)).exists()) {
             logger.error("File " + logFile + " doesn't exist.");
             throw new RuntimeException();
@@ -378,7 +390,11 @@ public class DataProcessor {
             statements = model.listStatements(null, typeProperty, ResourceFactory.createResource(classProperty));
         else if (this.classProperty.equals(MainClassProperty.TWIG_MAINCLASS.mainClassProperty()))
             statements = model.listStatements(null, typeProperty, ResourceFactory.createResource(classProperty));
-
+        else if (this.classProperty.equals(MainClassProperty.TT_DATA_MAINCLASS.mainClassProperty())) {
+            Property property = ResourceFactory.createProperty(MainClassProperty.TT_DATA_MAINCLASS.mainClassProperty());
+            statements = model.listStatements(null, property, (RDFNode) null);
+        } else if (this.classProperty.equals(MainClassProperty.OBS_DATA_MAINCLASS.mainClassProperty()))
+            statements = model.listStatements(null, typeProperty, ResourceFactory.createResource(classProperty));
         if (statements == null) {
             logger.error("Model includes no subjects of type " + classProperty);
             throw new RuntimeException();
@@ -399,6 +415,10 @@ public class DataProcessor {
             mainResource = statement.getSubject();
         } else if (this.classProperty.equals(MainClassProperty.TWIG_MAINCLASS.mainClassProperty())) {
             mainResource = statement.getSubject();
+        } else if (this.classProperty.equals(MainClassProperty.TT_DATA_MAINCLASS.mainClassProperty())) {
+            mainResource = (Resource) statement.getObject();
+        } else if (this.classProperty.equals(MainClassProperty.OBS_DATA_MAINCLASS.mainClassProperty())) {
+            mainResource = (Resource) statement.getSubject();
         }
         if (mainResource == null) {
             logger.error("Statement " + statement.toString() + " includes no subjects of type " + classProperty);
@@ -421,18 +441,46 @@ public class DataProcessor {
             logger.error("Mimicking algorithm did not return any data files.");
             throw new RuntimeException();
         }
-        Model model = getModel(fullNameDirectory + listOfFiles[0].getName());
+        if (this.classProperty.equals(MainClassProperty.OBS_DATA_MAINCLASS.mainClassProperty())
+                || this.classProperty.equals(MainClassProperty.TT_DATA_MAINCLASS.mainClassProperty())) {
+            int sizeCounter = 0;
+            int eventCounter = 0;
+            for (File file : listOfFiles) {
+                Model model = getModel(fullNameDirectory + file.getName());
+                sizeCounter += model.size();
+                StmtIterator statements = getStatements(model);
 
-        StmtIterator statements = getStatements(model);
+                // find all events that are instances of classProperty
+                while (statements.hasNext()) {
+                    eventCounter++;
+                    Statement statement = statements.next();
+                    Resource mainResource = getMainResource(statement);
+                    createSubModel(fullNameDirectory, mainResource, model);
 
-        // find all events that are instances of classProperty
-        while (statements.hasNext()) {
-            Statement statement = statements.next();
-            Resource mainResource = getMainResource(statement);
-            createSubModel(fullNameDirectory, mainResource, model);
+                }
 
+            }
+            logger.info(ID + " Number of triples: " + sizeCounter);
+            logger.info(ID + " Number of events: " + eventCounter);
+            writeTimeStamps(fullNameDirectory);
+
+        } else {
+            Model model = getModel(fullNameDirectory + listOfFiles[0].getName());
+            logger.info(ID + " Number of triples: " + model.size());
+
+            StmtIterator statements = getStatements(model);
+            int counter = 0;
+            // find all events that are instances of classProperty
+            while (statements.hasNext()) {
+                counter++;
+                Statement statement = statements.next();
+                Resource mainResource = getMainResource(statement);
+                createSubModel(fullNameDirectory, mainResource, model);
+
+            }
+            logger.info(ID + " Number of events: " + counter);
+            writeTimeStamps(fullNameDirectory);
         }
-        writeTimeStamps(fullNameDirectory);
 
     }
 

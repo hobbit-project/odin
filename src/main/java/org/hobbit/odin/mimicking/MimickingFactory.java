@@ -66,7 +66,9 @@ public class MimickingFactory {
         switch (type) {
         case TWIG:
             String[] twigArguments = new String[5];
-            twigArguments[0] = String.valueOf(population);
+            int users = Integer.valueOf(population) / 300;
+            users++;
+            twigArguments[0] = String.valueOf(users);
             twigArguments[1] = "1";
             twigArguments[2] = "2009-09-29";
             twigArguments[3] = String.valueOf(seed);
@@ -78,6 +80,20 @@ public class MimickingFactory {
             transportDataArguments[0] = "GTFS_GEN_SEED=" + seed;
             transportDataArguments[1] = "GTFS_GEN_CONNECTIONS__CONNECTIONS=" + population;
             mimickingTask = transportDataArguments;
+            break;
+        case TT:
+            String[] TomTomDataArguments = new String[3];
+            TomTomDataArguments[0] = "HOBBIT_NUM_TRACES=" + population;
+            TomTomDataArguments[1] = "HOBBIT_SEED=" + seed;
+            TomTomDataArguments[2] = "HOBBIT_OUTPUT_FORMAT=rdf"; 
+            mimickingTask = TomTomDataArguments;
+            break;
+        case OBS:
+            String[] obsArguments = new String[3];
+            obsArguments[0] = "GENERATOR_SEED=" + seed;
+            obsArguments[1] = "GENERATOR_POPULATION=" + population;
+            obsArguments[2] = "OUTPUT_FORMAT=" +0;
+            mimickingTask = obsArguments;
             break;
         default:
             logger.error("Wrong mimicking type: " + type.toString());

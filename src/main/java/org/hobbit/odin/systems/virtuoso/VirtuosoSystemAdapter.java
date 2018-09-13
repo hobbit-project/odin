@@ -121,7 +121,8 @@ public class VirtuosoSystemAdapter extends AbstractSystemAdapter {
                     int messagesReceived = totalReceived.get();
 
                     while (messagesSent != messagesReceived) {
-                        LOGGER.info("Messages received and sent are not equal");
+                        LOGGER.info("Messages received and sent are not equal "+messagesSent+" "+messagesReceived);
+                        
                         try {
                             TimeUnit.SECONDS.sleep(2);
 

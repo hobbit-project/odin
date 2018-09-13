@@ -562,7 +562,6 @@ public class SelectQueryInfo {
         Query q = OpAsQuery.asQuery(op); // Convert to a query
         q.addGraphURI(graphName);
         q.setQuerySelectType();
-
         // save to output
         OutputStream outStream = null;
         String fileName = outputFolder + "selectQuery" + streamCounter + ".sparql";

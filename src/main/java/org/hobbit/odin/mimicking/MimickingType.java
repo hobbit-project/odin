@@ -14,7 +14,7 @@ import org.apache.log4j.Logger;
  */
 public enum MimickingType {
 
-    TWIG, TRANSPORT_DATA;
+    TWIG, TRANSPORT_DATA, TT, OBS;
 
     private String executeCommand;
     private String mimickingName;
@@ -30,6 +30,14 @@ public enum MimickingType {
         TRANSPORT_DATA.mimickingName = "TRANSPORT_DATA";
         TRANSPORT_DATA.executeCommand = "podigg/podigg-lc-hobbit";
         TRANSPORT_DATA.outputType = "rdf";
+        
+        TT.mimickingName = "TT";
+        TT.executeCommand = "git.project-hobbit.eu:4567/filipe.teixeira/synthetic-trace-generator:latest";
+        TT.outputType = "rdf";
+        
+        OBS.mimickingName = "OBS";
+        OBS.executeCommand = "git.project-hobbit.eu:4567/smirnp/sml-v1-mimicking-datagen:latest";
+        OBS.outputType = "rdf";
     }
 
     /* Getters */
@@ -62,6 +70,10 @@ public enum MimickingType {
             return TWIG;
         case ("TRANSPORT_DATA"):
             return TRANSPORT_DATA;
+        case ("TT"):
+            return TT;
+        case ("OBS"):
+            return OBS;
         default:
             logger.error("Unknown mimicking algorithm: " + name);
             throw new IOException();

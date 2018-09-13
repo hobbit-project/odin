@@ -29,6 +29,7 @@ public class OdinTaskGenerator extends AbstractTaskGenerator {
     private static final Logger LOGGER = LoggerFactory.getLogger(OdinTaskGenerator.class);
 
     public OdinTaskGenerator() {
+        super(1);
     };
 
     @Override

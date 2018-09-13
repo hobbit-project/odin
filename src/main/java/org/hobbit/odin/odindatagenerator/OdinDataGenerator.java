@@ -293,12 +293,12 @@ public class OdinDataGenerator extends AbstractDataGenerator {
         minMaxTimestampMutex.acquire();
 
         // convert old time stamps to new time stamps
-        LOGGER.info("Converting time stamps to benchmark interval.");
+        LOGGER.info(this.getGeneratorId() + " Converting time stamps to benchmark interval.");
         Map<Long, ArrayList<String>> insertList = convertTimeStampsToNewInterval(files);
         // divide insert queries into streams
-        LOGGER.info("Creating streams..");
+        LOGGER.info(this.getGeneratorId() + " Creating streams..");
         createStreams(insertList);
-        LOGGER.info("Initialization is over.");
+        LOGGER.info(this.getGeneratorId() + " Initialization is over.");
 
     }
 
@@ -317,7 +317,8 @@ public class OdinDataGenerator extends AbstractDataGenerator {
                     throw new IOException("Failed to create new directory: " + getDATA_GENERATOR_OUTPUT_DATASET());
                 } catch (IOException e) {
                     e.printStackTrace();
-                    LOGGER.error("Failed to create new directory: " + getDATA_GENERATOR_OUTPUT_DATASET());
+                    LOGGER.error(this.getGeneratorId() + " Failed to create new directory: "
+                            + getDATA_GENERATOR_OUTPUT_DATASET());
                     throw new RuntimeException();
                 }
             }
@@ -334,7 +335,8 @@ public class OdinDataGenerator extends AbstractDataGenerator {
                     throw new IOException("Failed to create new directory: " + getDATA_GENERATOR_OUTPUT_DATASET());
                 } catch (IOException e) {
                     e.printStackTrace();
-                    LOGGER.error("Failed to create new directory: " + getDATA_GENERATOR_OUTPUT_DATASET());
+                    LOGGER.error(this.getGeneratorId() + " Failed to create new directory: "
+                            + getDATA_GENERATOR_OUTPUT_DATASET());
                     throw new RuntimeException();
                 }
             }
@@ -406,7 +408,7 @@ public class OdinDataGenerator extends AbstractDataGenerator {
      * @throws IOException
      */
     public void runMimicking() {
-        LOGGER.info("Running mimicking algorithm with seed " + getDATA_GENERATOR_SEED());
+        LOGGER.info(this.getGeneratorId() + " Running mimicking algorithm with seed " + getDATA_GENERATOR_SEED());
         // get mimicking type
         MimickingType mimickingType;
         try {
@@ -424,7 +426,6 @@ public class OdinDataGenerator extends AbstractDataGenerator {
             throw new RuntimeException();
 
         }
-
         switch (mimickingType) {
         case TWIG:
             ArrayList<String> twigArg = new ArrayList<String>(Arrays.asList(arguments));
@@ -445,16 +446,16 @@ public class OdinDataGenerator extends AbstractDataGenerator {
                 p.waitFor();
                 int v = p.exitValue();
                 if (v != 0) {
-                    LOGGER.error("TWIG script terminated with exit code " + v);
+                    LOGGER.error(this.getGeneratorId() + " TWIG script terminated with exit code " + v);
                     throw new RuntimeException();
                 }
             } catch (IOException e) {
                 e.printStackTrace(); // or log it, or otherwise handle it
-                LOGGER.error("Couldn't parse output of TWIG");
+                LOGGER.error(this.getGeneratorId() + " Couldn't parse output of TWIG");
                 throw new RuntimeException();
             } catch (InterruptedException ie) {
                 ie.printStackTrace(); // or log it, or otherwise handle it
-                LOGGER.error("waitFor() was interrupted");
+                LOGGER.error(this.getGeneratorId() + " waitFor() was interrupted");
                 throw new RuntimeException();
             }
             break;
@@ -464,15 +465,42 @@ public class OdinDataGenerator extends AbstractDataGenerator {
                 alg.generateData(getDATA_GENERATOR_OUTPUT_DATASET(), arguments);
             } catch (Exception e) {
                 e.printStackTrace();
-                LOGGER.error("TRANSPORT_DATA script terminated.");
+                LOGGER.error(this.getGeneratorId() + " TRANSPORT_DATA script terminated.");
                 throw new RuntimeException();
             }
             break;
+        case TT:
+            alg = new DockerBasedMimickingAlg(this, mimickingType.getExecuteCommand());
+            try {
+                alg.generateData(getDATA_GENERATOR_OUTPUT_DATASET(), arguments);
+            } catch (Exception e) {
+                e.printStackTrace();
+                LOGGER.error(this.getGeneratorId() + " TT script terminated.");
+                throw new RuntimeException();
+            }
+
+            break;
+        case OBS:
+            String[] newArguments = new String[arguments.length + 1];
+            for (int i = 0; i < arguments.length; i++)
+                newArguments[i] = arguments[i];
+            newArguments[arguments.length] = "HOBBIT_GENERATOR_ID=" + this.getGeneratorId();
+
+            alg = new DockerBasedMimickingAlg(this, mimickingType.getExecuteCommand());
+            try {
+                alg.generateData(getDATA_GENERATOR_OUTPUT_DATASET(), newArguments);
+            } catch (Exception e) {
+                e.printStackTrace();
+                LOGGER.error(this.getGeneratorId() + " OBS script terminated.");
+                throw new RuntimeException();
+            }
+
+            break;
         default:
-            LOGGER.error("Unknown mimicking algorithm: " + getDATA_GENERATOR_DATASET_NAME());
+            LOGGER.error(this.getGeneratorId() + " Unknown mimicking algorithm: " + getDATA_GENERATOR_DATASET_NAME());
             throw new RuntimeException();
         }
-        LOGGER.info("Mimicking data has been received.");
+        LOGGER.info(this.getGeneratorId() + " Mimicking data has been received.");
 
     }
 
@@ -483,7 +511,8 @@ public class OdinDataGenerator extends AbstractDataGenerator {
      */
     public void divideData() {
         DataProcessor dataProcessor = null;
-        dataProcessor = new DataProcessor(getDATA_GENERATOR_OUTPUT_DATASET(), getDATA_GENERATOR_DATASET_NAME());
+        dataProcessor = new DataProcessor(getDATA_GENERATOR_OUTPUT_DATASET(), getDATA_GENERATOR_DATASET_NAME(),
+                this.getGeneratorId());
         dataProcessor.divideData();
     }
 
@@ -679,6 +708,10 @@ public class OdinDataGenerator extends AbstractDataGenerator {
 
                     if (this.getDATA_GENERATOR_DATASET_NAME().equals("TWIG"))
                         df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+                    else if (this.getDATA_GENERATOR_DATASET_NAME().equals("TT"))
+                        df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS");
+                    else if (this.getDATA_GENERATOR_DATASET_NAME().equals("OBS"))
+                        df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
                     else
                         df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS");
                     Date date = df.parse(timeStamp);
@@ -689,16 +722,17 @@ public class OdinDataGenerator extends AbstractDataGenerator {
                 } catch (IOException | ParseException e) {
                     e.printStackTrace();
                     if (e instanceof ParseException)
-                        LOGGER.error("Couldn't parse date in " + dataRow);
+                        LOGGER.error(this.getGeneratorId() + " Couldn't parse date in " + dataRow);
                     else
-                        LOGGER.error("Couldn't read next line ");
+                        LOGGER.error(this.getGeneratorId() + " Couldn't read next line ");
                     TSVFile.close();
                     throw new RuntimeException();
                 }
             }
         } catch (IOException e) {
             e.printStackTrace();
-            LOGGER.error("IOException for " + getDATA_GENERATOR_OUTPUT_DATASET() + "timeStamps.tsv");
+            LOGGER.error(this.getGeneratorId() + " IOException for " + getDATA_GENERATOR_OUTPUT_DATASET()
+                    + "timeStamps.tsv");
             throw new RuntimeException();
         }
 
@@ -706,35 +740,37 @@ public class OdinDataGenerator extends AbstractDataGenerator {
             TSVFile.close();
         } catch (IOException e) {
             e.printStackTrace();
-            LOGGER.error("Couldn't close file " + getDATA_GENERATOR_OUTPUT_DATASET() + "timeStamps.tsv");
+            LOGGER.error(this.getGeneratorId() + " Couldn't close file " + getDATA_GENERATOR_OUTPUT_DATASET()
+                    + "timeStamps.tsv");
             throw new RuntimeException();
 
         }
-        LOGGER.info("Number of unique original time stamps: " + files.size());
+        LOGGER.info(this.getGeneratorId() + " Number of unique original time stamps: " + files.size());
         return files;
     }
 
     @Override
     protected void generateData() throws Exception {
 
-        LOGGER.info("Start bulk loading phase for Data Genetaror " + this.getGeneratorId());
+        LOGGER.info(this.getGeneratorId() + " Start bulk loading phase for Data Genetaror " + this.getGeneratorId());
         byte[] graph = RabbitMQUtils.writeByteArrays(new byte[][] { RabbitMQUtils.writeString(this.defaultGraph) });
         sendDataToSystemAdapter(graph);
         sendToCmdQueue(OdinConstants.BULK_LOAD_FROM_DATAGENERATOR);
         bulkLoadMutex.acquire();
-        LOGGER.info("Bulk loading phase finished for Data Generator " + this.getGeneratorId());
+        LOGGER.info(this.getGeneratorId() + " Bulk loading phase finished for Data Generator " + this.getGeneratorId());
 
         //////////////////////////////////////////////////////////////////////////////////
 
         LOGGER.info("Data Generator " + this.getGeneratorId() + " is running..");
         int poolSize = streams.values().size() + streams.size();
         ExecutorService executor = Executors.newFixedThreadPool(poolSize);
+        LOGGER.info(this.getGeneratorId() + ": number of streams: " + streams.size());
         // for each time stamp
         for (Entry<Integer, Stream> entry : streams.entrySet()) {
 
             // get the the stream
             Stream stream = entry.getValue();
-            LOGGER.info("Dealing with stream No." + stream.getID());
+            LOGGER.info(this.getGeneratorId() + " Dealing with stream No." + stream.getID());
             ArrayList<InsertQueryInfo> insertQueries = stream.getInsertQueries();
             long streamBeginPoint = 0l;
 

@@ -10,7 +10,9 @@ package org.hobbit.odin.util;
  */
 public enum TimeStampProperty {
     TRANSPORT_DATA_TIMESTAMP("http://semweb.mmlab.be/ns/linkedconnections#departureTime"), TWIG_TIMESTAMP(
-            "http://aksw.org/twig#tweetTime");
+            "http://aksw.org/twig#tweetTime"), TT_DATA_TIMESTAMP(
+                    "http://www.tomtom.com/ontologies/traces#hasTimestamp"), OBS_DATA_TIMESTAMP(
+                            "http://purl.oclc.org/NET/ssnx/ssn#observationResultTime\thttp://www.agtinternational.com/ontologies/IoTCore#valueLiteral");
     private String timeStampProperty;
 
     TimeStampProperty(String mc) {
