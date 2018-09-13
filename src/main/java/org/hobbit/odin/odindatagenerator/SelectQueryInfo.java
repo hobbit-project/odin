@@ -51,6 +51,8 @@ import org.apache.log4j.Logger;
 public class SelectQueryInfo {
 
     protected static final Logger logger = Logger.getLogger(SelectQueryInfo.class.getName());
+    private int maxRequestedPatterns = 10000;
+
     /* Time stamp of executing the SELECT query */
     private long timeStamp;
     /*
@@ -482,7 +484,9 @@ public class SelectQueryInfo {
 
         LinkedHashMap<Node, HashSet<Triple>> triples = new LinkedHashMap<Node, HashSet<Triple>>();
 
-        int tpCovered = (int) this.quadCounter.size() / 2;
+        // int tpCovered = (int) this.quadCounter.size() / 2;
+        int tpCovered = (int) Math.min(this.quadCounter.size(), maxRequestedPatterns) / 2;
+
         // logger.info("quadCounter: " + this.quadCounter.size());
         // logger.info("tpCovered: " + tpCovered);
 
