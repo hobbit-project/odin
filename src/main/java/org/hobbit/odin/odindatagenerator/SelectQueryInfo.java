@@ -51,7 +51,7 @@ import org.apache.log4j.Logger;
 public class SelectQueryInfo {
 
     protected static final Logger logger = Logger.getLogger(SelectQueryInfo.class.getName());
-    private int maxRequestedPatterns = 10000;
+    private int maxRequestedPatterns = 4000;
 
     /* Time stamp of executing the SELECT query */
     private long timeStamp;
@@ -474,14 +474,14 @@ public class SelectQueryInfo {
             tempModel.read(fileName);
             model.add(tempModel);
         }
-
+        logger.info("Finished reading the model");
         // logger.info("Size of model: " + model.size());
         // logger.info("Read all files");
         createTriplePatterns(model);
         // logger.info("Created triple patterns");
 
         Map<Triple, HashMap<Integer, Node>> sortedTps = sortBySizeOfValues();
-
+        logger.info("Finished sorting triples");
         LinkedHashMap<Node, HashSet<Triple>> triples = new LinkedHashMap<Node, HashSet<Triple>>();
 
         // int tpCovered = (int) this.quadCounter.size() / 2;

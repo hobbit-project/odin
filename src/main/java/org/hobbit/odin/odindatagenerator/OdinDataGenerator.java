@@ -553,6 +553,7 @@ public class OdinDataGenerator extends AbstractDataGenerator {
             }
             insertList.get(newTS.longValue()).add(subFiles);
         }
+        LOGGER.info(this.getGeneratorId() + " Number of new original time stamps: " + insertList.size());
 
         return insertList;
     }
@@ -604,6 +605,13 @@ public class OdinDataGenerator extends AbstractDataGenerator {
                     }
                 }
             }
+            if (d == 1) {//1 or 2 streams
+                if (rest != 0) {// 2 streams
+                    if (streamID == (d + 1)) {
+                        delay = 0l;
+                    }
+                }
+            }
             long newCurrentTS = newPreviousTS + delay;
 
             InsertQueryInfo insert = new InsertQueryInfo(newCurrentTS, delay);
@@ -639,6 +647,14 @@ public class OdinDataGenerator extends AbstractDataGenerator {
                             selectQueryDelay = 0l;
                     }
                 }
+                if (d == 1) {//1 or 2 streams
+                    if (rest != 0) {// 2 streams
+                        if (streamID == (d + 1)) {
+                            selectQueryDelay = 0l;
+                        }
+                    }
+                }
+
                 long selectQueryTS = (long) (newCurrentTS + selectQueryDelay);
                 // set the select query delay
                 selectQuery.setDelay(selectQueryDelay);
@@ -660,6 +676,8 @@ public class OdinDataGenerator extends AbstractDataGenerator {
                 long beginPoint = this.streams.get(streamID).getInsertQueryInfo(0).getTimeStamp();
                 this.streams.get(streamID).setBeginPoint(beginPoint);
                 this.streams.get(streamID).setEndPoint(selectQueryTS);
+
+                LOGGER.info(this.getGeneratorId() + " Created stream No." + streamID);
 
             }
             if ((iCounter % getDATA_GENERATOR_INSERT_QUERIES()) == 0) {
@@ -779,6 +797,7 @@ public class OdinDataGenerator extends AbstractDataGenerator {
                 // LOGGER.info("Sending INSERT SPARQL query No."+insertCounter);
                 InsertQueryInfo currentInsertQuery = insertQueries.get(i);
                 InsertThread insertThread = new InsertThread(currentInsertQuery);
+                //LOGGER.info("Delay for I " + currentInsertQuery.getDelay());
                 Thread.sleep(currentInsertQuery.getDelay());
                 if (i == 0) {
                     streamBeginPoint = System.currentTimeMillis();
@@ -791,6 +810,7 @@ public class OdinDataGenerator extends AbstractDataGenerator {
             SelectQueryInfo selectQuery = stream.getSelectQuery();
             long modelSize = stream.getStreamModelSize();
             SelectThread selectThread = new SelectThread(selectQuery, modelSize, streamBeginPoint);
+            LOGGER.info("Delay for S " + selectQuery.getDelay());
             Thread.sleep(selectQuery.getDelay());
             executor.execute(selectThread);
 

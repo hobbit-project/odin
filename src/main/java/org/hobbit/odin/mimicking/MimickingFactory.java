@@ -82,8 +82,11 @@ public class MimickingFactory {
             mimickingTask = transportDataArguments;
             break;
         case TT:
+            int traces = Integer.valueOf(population) / 250;
+            if(traces == 0)
+                traces = 1;
             String[] TomTomDataArguments = new String[3];
-            TomTomDataArguments[0] = "HOBBIT_NUM_TRACES=" + population;
+            TomTomDataArguments[0] = "HOBBIT_NUM_TRACES=" + traces;
             TomTomDataArguments[1] = "HOBBIT_SEED=" + seed;
             TomTomDataArguments[2] = "HOBBIT_OUTPUT_FORMAT=rdf"; 
             mimickingTask = TomTomDataArguments;
